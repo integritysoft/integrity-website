@@ -1,0 +1,2363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Integrity | Your Digital Activity Assistant</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --turquoise: #00E5FF;
+            --turquoise-dark: #00B8D4;
+            --turquoise-light: #84FFFF;
+            --turquoise-glow: rgba(0, 229, 255, 0.4);
+            --black: #000;
+            --dark-gray: #111;
+            --gray: #333;
+            --light-gray: #999;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'IBM Plex Mono', monospace;
+            background-color: var(--black);
+            color: white;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+        
+        a {
+            color: var(--turquoise);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        
+        a:hover {
+            color: var(--turquoise-light);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .btn {
+            display: inline-block;
+            background-color: var(--turquoise);
+            color: var(--black);
+            font-weight: 600;
+            padding: 12px 24px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'IBM Plex Mono', monospace;
+        }
+        
+        .btn:hover {
+            background-color: var(--turquoise-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px var(--turquoise-glow);
+        }
+        
+        .btn-outline {
+            background-color: transparent;
+            border: 2px solid var(--turquoise);
+            color: var(--turquoise);
+        }
+        
+        .btn-outline:hover {
+            background-color: var(--turquoise);
+            color: var(--black);
+        }
+
+        /* Header */
+        header {
+            padding: 20px 0;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 100;
+            background-color: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(64, 224, 208, 0.1);
+        }
+        
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--turquoise);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+        }
+
+        .logo span {
+            position: relative;
+            display: inline-block;
+        }
+
+        .logo span::after {
+            content: '';
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background-color: var(--turquoise);
+            border-radius: 50%;
+            top: 5px;
+            right: -14px;
+            animation: blink 1.5s infinite;
+            box-shadow: 0 0 10px var(--turquoise);
+        }
+
+        .logo-scan-line {
+            position: absolute;
+            height: 2px;
+            width: 100%;
+            background: linear-gradient(90deg, transparent, var(--turquoise), transparent);
+            top: 50%;
+            left: 0;
+            animation: scan 2s infinite;
+            opacity: 0.6;
+        }
+
+        @keyframes scan {
+            0% {
+                transform: translateY(-10px);
+                opacity: 0;
+            }
+            50% {
+                opacity: 0.8;
+            }
+            100% {
+                transform: translateY(10px);
+                opacity: 0;
+            }
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.2; }
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 30px;
+        }
+        
+        .nav-links a {
+            font-weight: 500;
+            position: relative;
+            color: white;
+        }
+        
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -5px;
+            left: 0;
+            background-color: var(--turquoise);
+            transition: width 0.3s ease;
+        }
+        
+        .nav-links a:hover {
+            color: var(--turquoise);
+        }
+        
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+
+        /* Mycelium Canvas Background */
+        #mycelium-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.7;
+        }
+
+        /* Hero Section */
+        .hero {
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+            padding-top: 60px;
+        }
+        
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.5) 100%);
+            z-index: -1;
+        }
+        
+        .hero-content {
+            max-width: 600px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .hero-title {
+            font-size: 4rem;
+            font-weight: 700;
+            margin-bottom: 40px;
+            line-height: 1.2;
+        }
+        
+        .hero-title span {
+            color: var(--turquoise);
+            position: relative;
+        }
+        
+        .hero-title span::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 10px;
+            bottom: 5px;
+            left: 0;
+            background-color: rgba(64, 224, 208, 0.2);
+            z-index: -1;
+            animation: glowPulse 3s infinite;
+        }
+        
+        @keyframes glowPulse {
+            0%, 100% { opacity: 0.2; }
+            50% { opacity: 0.5; }
+        }
+        
+        /* Activity indicator */
+        .activity-indicator {
+            display: flex;
+            align-items: center;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+        
+        .activity-dots {
+            display: flex;
+            align-items: center;
+            margin-right: 12px;
+        }
+        
+        .activity-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--turquoise);
+            border-radius: 50%;
+            margin-right: 6px;
+            animation: activityPulse 1.5s infinite;
+        }
+        
+        .activity-dot:nth-child(2) {
+            animation-delay: 0.5s;
+        }
+        
+        .activity-dot:nth-child(3) {
+            animation-delay: 1s;
+        }
+        
+        @keyframes activityPulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.8); }
+        }
+        
+        .activity-status {
+            font-size: 0.9rem;
+            color: var(--turquoise);
+            font-family: 'IBM Plex Mono', monospace;
+            letter-spacing: 1px;
+        }
+        
+        .hero-description {
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+            color: var(--light-gray);
+        }
+        
+        .hero-btns {
+            display: flex;
+            gap: 15px;
+        }
+
+        .gradient-bg {
+            position: absolute;
+            top: -300px;
+            right: -300px;
+            width: 800px;
+            height: 800px;
+            background: radial-gradient(circle, var(--turquoise-glow) 0%, rgba(0,0,0,0) 70%);
+            z-index: 0;
+            opacity: 0.7;
+            filter: blur(80px);
+            animation: pulse 10s infinite alternate;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.8); opacity: 0.5; }
+            100% { transform: scale(1.2); opacity: 0.7; }
+        }
+
+        /* About Section */
+        section {
+            padding: 120px 0;
+            position: relative;
+        }
+        
+        .section-title {
+            font-size: 2.5rem;
+            margin-bottom: 50px;
+            position: relative;
+            display: inline-block;
+        }
+        
+        .section-title::after {
+            content: '';
+            position: absolute;
+            width: 60px;
+            height: 4px;
+            bottom: -10px;
+            left: 0;
+            background-color: var(--turquoise);
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 50px;
+        }
+        
+        .feature-card {
+            background-color: rgba(255, 255, 255, 0.05);
+            padding: 30px;
+            border-radius: 8px;
+            border: 1px solid rgba(64, 224, 208, 0.1);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 10px 30px rgba(64, 224, 208, 0.1);
+            border-color: rgba(64, 224, 208, 0.3);
+        }
+        
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at top right, rgba(64, 224, 208, 0.1), transparent 70%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: -1;
+            border-radius: 8px;
+        }
+        
+        .feature-card:hover::before {
+            opacity: 1;
+        }
+        
+        .feature-icon {
+            font-size: 2rem;
+            color: var(--turquoise);
+            margin-bottom: 20px;
+        }
+        
+        .feature-title {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+        
+        .feature-description {
+            color: var(--light-gray);
+        }
+
+        /* Demo Section */
+        .demo-section {
+            padding: 80px 0;
+            margin-top: 40px;
+        }
+        
+        .demo-section h2.section-title {
+            margin-bottom: 30px;
+        }
+        
+        .demo-section > .container > p {
+            margin-bottom: 80px;
+            font-size: 1.1rem;
+        }
+        
+        .demo-container {
+            display: flex;
+            flex-direction: column;
+            gap: 80px;
+        }
+
+        .demo-card {
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid var(--turquoise);
+            border-radius: 8px;
+            padding: 30px;
+            margin-bottom: 40px;
+            transition: all 0.3s ease;
+        }
+
+        /* Chat Interface Styles */
+        .chat-interface {
+            background-color: var(--dark-gray);
+            border-radius: 10px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 500px;
+            border: 1px solid rgba(64, 224, 208, 0.2);
+            margin-bottom: 50px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        }
+        
+        .chat-header {
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 15px 20px;
+            border-bottom: 1px solid rgba(64, 224, 208, 0.2);
+        }
+        
+        .chat-title {
+            font-weight: 600;
+            color: var(--turquoise);
+            display: flex;
+            align-items: center;
+        }
+        
+        .chat-title::before {
+            content: '';
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            background-color: var(--turquoise);
+            border-radius: 50%;
+            margin-right: 10px;
+            animation: blink 2s infinite;
+        }
+        
+        .chat-messages {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .chat-message {
+            max-width: 80%;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        
+        .chat-message.user {
+            align-self: flex-end;
+        }
+        
+        .chat-message.assistant {
+            align-self: flex-start;
+        }
+        
+        .message-content {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 5px;
+        }
+        
+        .chat-message.user .message-content {
+            background-color: var(--turquoise);
+            color: var(--black);
+            border-top-right-radius: 0;
+        }
+        
+        .chat-message.assistant .message-content {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-top-left-radius: 0;
+        }
+        
+        .message-content ul {
+            padding-left: 20px;
+            margin: 10px 0;
+        }
+        
+        .message-time {
+            font-size: 0.7rem;
+            color: var(--light-gray);
+            align-self: flex-end;
+        }
+        
+        .chat-message.assistant .message-time {
+            align-self: flex-start;
+        }
+        
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 15px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            border-top-left-radius: 0;
+            width: 60px;
+        }
+        
+        .typing-indicator span {
+            width: 6px;
+            height: 6px;
+            background-color: var(--turquoise);
+            border-radius: 50%;
+            animation: typingBounce 1.5s infinite;
+        }
+        
+        .typing-indicator span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .typing-indicator span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        @keyframes typingBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+        
+        .chat-input-area {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px 20px;
+            background-color: rgba(0, 0, 0, 0.5);
+            border-top: 1px solid rgba(64, 224, 208, 0.2);
+        }
+        
+        .chat-input {
+            flex-grow: 1;
+            background-color: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 20px;
+            padding: 12px 20px;
+            color: white;
+            font-family: 'IBM Plex Mono', monospace;
+        }
+        
+        .chat-input:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(64, 224, 208, 0.3);
+        }
+        
+        .chat-send-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--turquoise);
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .chat-send-btn:hover {
+            background-color: var(--turquoise-dark);
+            transform: scale(1.1);
+        }
+        
+        .send-icon {
+            position: relative;
+            width: 12px;
+            height: 2px;
+            background-color: transparent;
+        }
+        
+        .send-icon::before {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-style: solid;
+            border-width: 6px 0 6px 12px;
+            border-color: transparent transparent transparent var(--black);
+            top: -5px;
+            right: -4px;
+        }
+
+        /* Terminal Styles */
+        .terminal {
+            background-color: rgba(0, 0, 0, 0.8);
+            border-radius: 8px;
+            border: 1px solid var(--gray);
+            padding: 20px;
+            font-family: monospace;
+            position: relative;
+            overflow: hidden;
+            height: 400px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        }
+        
+        .terminal-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .terminal-button {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .terminal-button:nth-child(1) {
+            background-color: #FF5F56;
+        }
+        
+        .terminal-button:nth-child(2) {
+            background-color: #FFBD2E;
+        }
+        
+        .terminal-button:nth-child(3) {
+            background-color: #27C93F;
+        }
+        
+        .terminal-title {
+            color: var(--light-gray);
+            font-size: 0.8rem;
+            flex-grow: 1;
+            text-align: center;
+        }
+        
+        .terminal-content {
+            height: calc(100% - 30px);
+            overflow-y: auto;
+            color: white;
+        }
+        
+        .prompt {
+            color: var(--turquoise);
+            margin-right: 10px;
+        }
+        
+        .command {
+            margin-bottom: 10px;
+        }
+        
+        .response {
+            color: var(--light-gray);
+            margin-bottom: 20px;
+            padding-left: 20px;
+        }
+
+        .cursor {
+            display: inline-block;
+            width: 10px;
+            height: 20px;
+            background-color: var(--turquoise);
+            animation: blink 1s infinite;
+            vertical-align: middle;
+        }
+
+        /* Waitlist Section */
+        #waitlist {
+            padding-top: 180px;
+            padding-bottom: 150px;
+        }
+        
+        .waitlist-form {
+            max-width: 500px;
+            margin: 0 auto;
+            background-color: rgba(255, 255, 255, 0.05);
+            padding: 40px;
+            border-radius: 8px;
+            border: 1px solid rgba(64, 224, 208, 0.1);
+        }
+        
+        .form-group {
+            margin-bottom: 30px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 16px;
+            background-color: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--gray);
+            border-radius: 4px;
+            color: white;
+            font-family: 'IBM Plex Mono', monospace;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--turquoise);
+            box-shadow: 0 0 0 2px var(--turquoise-glow);
+        }
+
+        .email-container {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .email-container input {
+            flex-grow: 1;
+        }
+
+        /* Updates Section */
+        .updates-container {
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        
+        .update-item {
+            margin-bottom: 30px;
+            padding-bottom: 30px;
+            border-bottom: 1px solid rgba(64, 224, 208, 0.1);
+        }
+        
+        .update-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .update-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        
+        .update-date {
+            color: var(--turquoise);
+            font-weight: 500;
+        }
+        
+        .update-content {
+            color: var(--light-gray);
+        }
+        
+        .update-tag {
+            display: inline-block;
+            padding: 4px 8px;
+            background-color: rgba(64, 224, 208, 0.1);
+            color: var(--turquoise);
+            border-radius: 4px;
+            font-size: 0.8rem;
+            margin-right: 8px;
+            margin-bottom: 15px;
+        }
+
+        /* Security Section */
+        .security-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+        
+        .security-item {
+            background-color: rgba(255, 255, 255, 0.05);
+            padding: 30px;
+            border-radius: 8px;
+            border: 1px solid rgba(64, 224, 208, 0.1);
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+        
+        .security-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            border-color: rgba(64, 224, 208, 0.3);
+        }
+        
+        .security-icon {
+            font-size: 2rem;
+            color: var(--turquoise);
+            margin-bottom: 20px;
+            position: relative;
+        }
+        
+        .security-icon::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: rgba(64, 224, 208, 0.1);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: -1;
+            animation: securityPulse 2s infinite;
+        }
+        
+        @keyframes securityPulse {
+            0% {
+                width: 20px;
+                height: 20px;
+                opacity: 0.8;
+            }
+            100% {
+                width: 60px;
+                height: 60px;
+                opacity: 0;
+            }
+        }
+        
+        .security-title {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+        }
+        
+        .security-description {
+            color: var(--light-gray);
+            flex-grow: 1;
+        }
+
+        /* Feedback Section */
+        .feedback-container {
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        
+        .feedback-form textarea {
+            width: 100%;
+            padding: 16px;
+            background-color: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--gray);
+            border-radius: 4px;
+            color: white;
+            font-family: 'IBM Plex Mono', monospace;
+            resize: vertical;
+            min-height: 150px;
+            margin-bottom: 30px;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .feedback-form textarea:focus {
+            outline: none;
+            border-color: var(--turquoise);
+            box-shadow: 0 0 0 2px var(--turquoise-glow);
+        }
+
+        /* Footer */
+        footer {
+            background-color: var(--dark-gray);
+            padding: 50px 0;
+            border-top: 1px solid rgba(64, 224, 208, 0.1);
+        }
+        
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 30px;
+        }
+        
+        .footer-logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--turquoise);
+            margin-bottom: 20px;
+        }
+        
+        .footer-description {
+            color: var(--light-gray);
+            margin-bottom: 20px;
+        }
+        
+        .footer-links h3 {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+        }
+        
+        .footer-links ul {
+            list-style: none;
+        }
+        
+        .footer-links li {
+            margin-bottom: 10px;
+        }
+        
+        .social-links {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .social-link {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        
+        .social-link:hover {
+            background-color: var(--turquoise);
+            transform: translateY(-5px);
+        }
+        
+        .social-link i {
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .copyright {
+            margin-top: 50px;
+            text-align: center;
+            color: var(--light-gray);
+            font-size: 0.9rem;
+        }
+
+        /* Additional Responsive Styles */
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 3rem;
+            }
+            
+            .hero-description {
+                font-size: 1rem;
+            }
+            
+            .section-title {
+                font-size: 2rem;
+            }
+            
+            .nav-links {
+                display: none;
+            }
+            
+            .footer-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Download Section */
+        .download-section {
+            background-color: var(--dark-gray);
+            padding: 100px 0;
+            text-align: center;
+        }
+        
+        .download-container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .download-title {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            color: var(--turquoise);
+        }
+        
+        .download-description {
+            color: var(--light-gray);
+            margin-bottom: 40px;
+            font-size: 1.1rem;
+        }
+        
+        .download-options {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .download-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background-color: var(--turquoise);
+            color: var(--black);
+            padding: 15px 30px;
+            border-radius: 4px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .download-btn:hover {
+            background-color: var(--turquoise-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px var(--turquoise-glow);
+        }
+        
+        .download-btn i {
+            font-size: 1.2rem;
+        }
+        
+        .download-btn-alt {
+            background-color: transparent;
+            border: 2px solid var(--turquoise);
+            color: var(--turquoise);
+        }
+        
+        .download-btn-alt:hover {
+            background-color: var(--turquoise);
+            color: var(--black);
+        }
+        
+        .download-note {
+            color: var(--light-gray);
+            font-size: 0.9rem;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        /* Auth Modal */
+        .auth-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+        
+        .auth-modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .auth-container {
+            background-color: var(--dark-gray);
+            padding: 40px;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 400px;
+            border: 1px solid rgba(64, 224, 208, 0.2);
+            position: relative;
+        }
+        
+        .auth-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: var(--light-gray);
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: color 0.3s ease;
+        }
+        
+        .auth-close:hover {
+            color: var(--turquoise);
+        }
+        
+        .auth-tabs {
+            display: flex;
+            margin-bottom: 30px;
+            border-bottom: 1px solid rgba(64, 224, 208, 0.2);
+        }
+        
+        .auth-tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            color: var(--light-gray);
+            transition: all 0.3s ease;
+            border-bottom: 2px solid transparent;
+        }
+        
+        .auth-tab.active {
+            color: var(--turquoise);
+            border-bottom-color: var(--turquoise);
+        }
+        
+        .auth-form {
+            display: none;
+        }
+        
+        .auth-form.active {
+            display: block;
+        }
+        
+        .auth-form input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 20px;
+            background-color: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--gray);
+            border-radius: 4px;
+            color: white;
+            font-family: 'IBM Plex Mono', monospace;
+        }
+        
+        .auth-form input:focus {
+            outline: none;
+            border-color: var(--turquoise);
+            box-shadow: 0 0 0 2px var(--turquoise-glow);
+        }
+        
+        .auth-form button {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--turquoise);
+            color: var(--black);
+            border: none;
+            border-radius: 4px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .auth-form button:hover {
+            background-color: var(--turquoise-dark);
+        }
+        
+        .auth-switch {
+            text-align: center;
+            margin-top: 20px;
+            color: var(--light-gray);
+        }
+        
+        .auth-switch a {
+            color: var(--turquoise);
+            cursor: pointer;
+        }
+        
+        .auth-switch a:hover {
+            text-decoration: underline;
+        }
+
+        .input-section {
+            margin-top: 60px;
+            padding: 40px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 12px;
+            border: 1px solid var(--turquoise);
+        }
+
+        /* Auth Section */
+        .auth-section {
+            padding: 100px 0;
+            background: rgba(0, 0, 0, 0.8);
+            position: relative;
+        }
+
+        .auth-container {
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 40px;
+            background: rgba(0, 0, 0, 0.9);
+            border: 1px solid var(--turquoise);
+            border-radius: 12px;
+            box-shadow: 0 0 20px var(--turquoise-glow);
+        }
+
+        .auth-tabs {
+            display: flex;
+            margin-bottom: 30px;
+            border-bottom: 2px solid var(--turquoise);
+        }
+
+        .auth-tab {
+            flex: 1;
+            text-align: center;
+            padding: 15px;
+            cursor: pointer;
+            color: var(--light-gray);
+            transition: all 0.3s ease;
+        }
+
+        .auth-tab.active {
+            color: var(--turquoise);
+            border-bottom: 2px solid var(--turquoise);
+            margin-bottom: -2px;
+        }
+
+        .auth-form {
+            display: none;
+        }
+
+        .auth-form.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--turquoise);
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--turquoise);
+            border-radius: 4px;
+            color: white;
+            font-family: 'IBM Plex Mono', monospace;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            box-shadow: 0 0 10px var(--turquoise-glow);
+        }
+
+        .auth-error {
+            color: #ff4444;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .auth-success {
+            color: var(--turquoise);
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        /* Signup Button */
+        .signup-btn {
+            padding: 8px 16px;
+            background-color: var(--turquoise);
+            color: var(--black) !important;
+            border-radius: 4px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .signup-btn:hover {
+            background-color: var(--turquoise-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px var(--turquoise-glow);
+        }
+
+        /* Set more professional icons */
+        .feature-icon i, .security-icon i {
+            font-size: 1.8rem;
+            position: relative;
+            display: inline-block;
+        }
+        
+        .feature-icon i:after, .security-icon i:after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, var(--turquoise), transparent);
+            opacity: 0.3;
+            border-radius: 50%;
+            z-index: -1;
+            transform: scale(1.5);
+        }
+    </style>
+</head>
+<body>
+    <!-- Mycelium Canvas Background -->
+    <canvas id="mycelium-canvas"></canvas>
+
+    <!-- Header -->
+    <header>
+        <div class="container">
+            <nav>
+                <div class="logo">Int<span>egrity</span><div class="logo-scan-line"></div></div>
+                <div class="nav-links">
+                    <a href="#about">About</a>
+                    <a href="#demo">Demo</a>
+                    <a href="#download">Download</a>
+                    <a href="#updates">Updates</a>
+                    <a href="#security">Security</a>
+                    <a href="#feedback">Feedback</a>
+                    <a href="#" onclick="openAuthModal(); return false;" class="signup-btn">Sign Up</a>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <h1 class="hero-title">Welcome to <span>Digital Integrity</span></h1>
+                <p class="hero-subtitle">Your AI-powered digital companion that understands your screen activity and helps you navigate your digital world.</p>
+                <div class="hero-buttons">
+                    <a href="#download" class="btn">Download Now</a>
+                    <a href="#features" class="btn btn-outline">Learn More</a>
+                </div>
+            </div>
+        </div>
+        <div class="gradient-bg"></div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about">
+        <div class="container">
+            <h2 class="section-title">What is Integrity?</h2>
+            <p>Integrity is a revolutionary software that passively monitors and understands your digital activity across devices. Using advanced AI, it creates a searchable, interactive log of your digital life that you can query using natural language.</p>
+            
+            <div class="features">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <h3 class="feature-title">Intelligent Search</h3>
+                    <p class="feature-description">Ask questions about your past digital activities and get instant, accurate answers. "When did I last edit that presentation?" or "Find the article about climate change I read last week."</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-network-wired"></i>
+                    </div>
+                    <h3 class="feature-title">Contextual Awareness</h3>
+                    <p class="feature-description">Integrity understands the relationships between your activities, creating a comprehensive web of your digital interactions that provides deeper insights.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h3 class="feature-title">Privacy-First Design</h3>
+                    <p class="feature-description">All data processing happens locally on your device. Your information never leaves your system without your explicit permission.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Demo Section -->
+    <section id="demo" class="demo-section">
+        <div class="container">
+            <h2 class="section-title">Experience Integrity</h2>
+            <p>See how Integrity can help you interact with your digital activity history through natural language.</p>
+            
+            <div class="demo-container">
+                <!-- Chat Interface Demo -->
+                <div class="chat-interface">
+                    <div class="chat-header">
+                        <div class="chat-title">Integrity Assistant</div>
+                    </div>
+                    <div class="chat-messages">
+                        <div class="chat-message assistant">
+                            <div class="message-content">
+                                Hello! I'm your Integrity Assistant. I've been analyzing your digital activity. How can I help you today?
+                            </div>
+                            <div class="message-time">10:32 AM</div>
+                        </div>
+                        
+                        <div class="chat-message user">
+                            <div class="message-content">
+                                What have I been working on this week?
+                            </div>
+                            <div class="message-time">10:33 AM</div>
+                        </div>
+                        
+                        <div class="chat-message assistant typing">
+                            <div class="typing-indicator">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </div>
+                        </div>
+                        
+                        <div class="chat-message assistant">
+                            <div class="message-content">
+                                This week you've primarily focused on the Q1 Marketing Strategy. You've spent approximately 12.5 hours across multiple applications:
+                                <ul>
+                                    <li>Google Docs (6.2 hours)</li>
+                                    <li>Excel (3.8 hours)</li>
+                                    <li>Research on competitor sites (2.5 hours)</li>
+                                </ul>
+                                You also had 4 Zoom meetings related to this project. Would you like me to provide more details on any specific part of your work?
+                            </div>
+                            <div class="message-time">10:33 AM</div>
+                        </div>
+                        
+                        <div class="chat-message user">
+                            <div class="message-content">
+                                Can you find the Excel spreadsheet I was working on yesterday?
+                            </div>
+                            <div class="message-time">10:34 AM</div>
+                        </div>
+                        
+                        <div class="chat-message assistant">
+                            <div class="message-content">
+                                I found the Excel file you were working on yesterday. It's "Budget_2025_Q1_Marketing.xlsx" located in your "Projects/Marketing/2025" folder. You last edited it at 4:45 PM for about 45 minutes. Would you like me to open it for you?
+                            </div>
+                            <div class="message-time">10:34 AM</div>
+                        </div>
+                    </div>
+                    <div class="chat-input-area">
+                        <input type="text" placeholder="Ask Integrity about your activity..." class="chat-input">
+                        <button class="chat-send-btn">
+                            <span class="send-icon"></span>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Terminal Demo -->
+                <div class="terminal">
+                    <div class="terminal-header">
+                        <div class="terminal-button"></div>
+                        <div class="terminal-button"></div>
+                        <div class="terminal-button"></div>
+                        <div class="terminal-title">integrity ~ terminal</div>
+                    </div>
+                    <div class="terminal-content" id="terminal-content">
+                        <div class="command">
+                            <span class="prompt">user@integrity:~$</span> run integrity
+                        </div>
+                        <div class="response">
+                            Initializing Integrity v0.9.2 (Beta)<br>
+                            Scanning activity database...<br>
+                            Connected. Ready to assist.
+                        </div>
+                        <div class="command">
+                            <span class="prompt">user@integrity:~$</span> what did I work on yesterday?
+                        </div>
+                        <div class="response">
+                            Yesterday you worked on:<br>
+                            - Excel spreadsheet "Budget_2025.xlsx" (2 hours)<br>
+                            - Email drafting to client XYZ (45 min)<br>
+                            - Research on competitor products (1.5 hours)
+                        </div>
+                        <div class="command">
+                            <span class="prompt">user@integrity:~$</span> find all resources related to project alpha
+                        </div>
+                        <div class="response">
+                            Found 7 items related to Project Alpha:<br>
+                            - 3 Google Docs<br>
+                            - 2 Figma designs<br>
+                            - 1 Slack conversation<br>
+                            - 1 GitHub repository<br><br>
+                            Would you like me to list them in detail?
+                        </div>
+                        <div class="command">
+                            <span class="prompt">user@integrity:~$</span> <span class="cursor"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Waitlist Section -->
+    <section id="waitlist">
+        <div class="container">
+            <h2 class="section-title">Join the Beta Waitlist</h2>
+            <p>Be among the first to experience Integrity and help shape its future. Limited spots available.</p>
+            
+            <div class="waitlist-form">
+                <div class="form-group">
+                    <label for="name">Name</label>
+                    <input type="text" id="name" placeholder="Your name">
+                </div>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <div class="email-container">
+                        <input type="email" id="email" placeholder="Your email address">
+                        <button class="btn">Join Waitlist</button>
+                    </div>
+                </div>
+                <p style="color: var(--light-gray); font-size: 0.9rem; margin-top: 20px;">By joining, you agree to receive updates about Integrity. We'll never spam you or share your information.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Updates Section -->
+    <section id="updates">
+        <div class="container">
+            <h2 class="section-title">Development Updates</h2>
+            <p>Follow our progress as we build and refine Integrity.</p>
+            
+            <div class="updates-container">
+                <div class="update-item">
+                    <div class="update-header">
+                        <h3 class="update-title">Beta Testing Phase Announced</h3>
+                        <div class="update-date">February 28, 2025</div>
+                    </div>
+                    <div class="update-tags">
+                        <span class="update-tag">Announcement</span>
+                        <span class="update-tag">Beta</span>
+                    </div>
+                    <div class="update-content">
+                        <p>We're excited to announce that Integrity is entering beta testing next month! We're looking for users across different workflows to help us test and refine the experience. Sign up for the waitlist to be considered.</p>
+                    </div>
+                </div>
+                
+                <div class="update-item">
+                    <div class="update-header">
+                        <h3 class="update-title">Enhanced Activity Recognition</h3>
+                        <div class="update-date">February 15, 2025</div>
+                    </div>
+                    <div class="update-tags">
+                        <span class="update-tag">Feature</span>
+                        <span class="update-tag">Technical</span>
+                    </div>
+                    <div class="update-content">
+                        <p>Our latest internal build includes significant improvements to the activity recognition system. Integrity can now better understand context switching between applications and identify project-related activities with greater accuracy.</p>
+                    </div>
+                </div>
+                
+                <div class="update-item">
+                    <div class="update-header">
+                        <h3 class="update-title">Privacy Framework Completed</h3>
+                        <div class="update-date">January 30, 2025</div>
+                    </div>
+                    <div class="update-tags">
+                        <span class="update-tag">Security</span>
+                        <span class="update-tag">Privacy</span>
+                    </div>
+                    <div class="update-content">
+                        <p>We've finalized our privacy framework ensuring all user data remains local and encrypted. This foundational element of Integrity guarantees your information never leaves your device without explicit permission.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Security Section -->
+    <section id="security">
+        <div class="container">
+            <h2 class="section-title">Security & Privacy</h2>
+            <p>Your data never leaves your device without your explicit permission. We've built Integrity with privacy as the foundation.</p>
+            
+            <div class="security-container">
+                <div class="security-item">
+                    <div class="security-icon">
+                        <i class="fas fa-server"></i>
+                    </div>
+                    <h3 class="security-title">Local Processing</h3>
+                    <p class="security-description">All data processing happens directly on your device. Your activity data is never uploaded to any server without your explicit consent.</p>
+                </div>
+                
+                <div class="security-item">
+                    <div class="security-icon">
+                        <i class="fas fa-lock"></i>
+                    </div>
+                    <h3 class="security-title">End-to-End Encryption</h3>
+                    <p class="security-description">Your data is secured with military-grade AES-256 encryption, protecting it from unauthorized access even on your own device.</p>
+                </div>
+                
+                <div class="security-item">
+                    <div class="security-icon">
+                        <i class="fas fa-sliders-h"></i>
+                    </div>
+                    <h3 class="security-title">Customizable Monitoring</h3>
+                    <p class="security-description">You control what Integrity can and cannot see. Easily exclude sensitive applications or websites from being monitored.</p>
+                </div>
+                
+                <div class="security-item">
+                    <div class="security-icon">
+                        <i class="fas fa-history"></i>
+                    </div>
+                    <h3 class="security-title">Transparent Logging</h3>
+                    <p class="security-description">Review detailed logs of exactly what Integrity has monitored and processed, with the option to delete any entries at any time.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Feedback Section -->
+    <section id="feedback">
+        <div class="container">
+            <h2 class="section-title">Share Your Thoughts</h2>
+            <p>We're building Integrity for you. Let us know what features you'd like to see or how you envision using it.</p>
+            
+            <div class="feedback-container">
+                <div class="feedback-form">
+                    <textarea placeholder="Share your feedback, feature requests, or use cases..."></textarea>
+                    <button class="btn">Submit Feedback</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Download Section -->
+    <section class="download-section">
+        <div class="container">
+            <div class="download-container">
+                <h2 class="download-title">Download Integrity Assistant</h2>
+                <p class="download-description">Get started with Integrity Assistant 0.1.2 Public Alpha today.</p>
+                <div class="download-options">
+                    <a href="downloads/integrity-assistant-windows.zip" class="download-btn">
+                        <i class="fas fa-download"></i>
+                        Download for Windows
+                    </a>
+                    <a href="downloads/integrity-assistant-macos.zip" class="download-btn download-btn-alt">
+                        <i class="fas fa-apple"></i>
+                        Download for macOS
+                    </a>
+                    <a href="downloads/integrity-assistant-linux.zip" class="download-btn download-btn-alt">
+                        <i class="fas fa-linux"></i>
+                        Download for Linux
+                    </a>
+                </div>
+                <p class="download-note">After downloading, extract the ZIP file and run the appropriate installer for your system.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Auth Modal -->
+    <div class="auth-modal" id="authModal">
+        <div class="auth-container">
+            <div class="auth-close" onclick="closeAuthModal()">
+                <i class="fas fa-times"></i>
+            </div>
+            <div class="auth-tabs">
+                <div class="auth-tab active" onclick="switchAuthTab('login')">Login</div>
+                <div class="auth-tab" onclick="switchAuthTab('signup')">Sign Up</div>
+            </div>
+            
+            <form class="auth-form active" id="loginForm">
+                <input type="email" placeholder="Email" required>
+                <input type="password" placeholder="Password" required>
+                <button type="submit">Login</button>
+                <div class="auth-switch">
+                    Don't have an account? <a onclick="switchAuthTab('signup')">Sign up</a>
+                </div>
+            </form>
+            
+            <form class="auth-form" id="signupForm">
+                <input type="text" placeholder="Full Name" required>
+                <input type="email" placeholder="Email" required>
+                <input type="password" placeholder="Password" required>
+                <input type="password" placeholder="Confirm Password" required>
+                <button type="submit">Create Account</button>
+                <div class="auth-switch">
+                    Already have an account? <a onclick="switchAuthTab('login')">Login</a>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Account Modal -->
+    <div class="auth-modal" id="accountModal">
+        <div class="auth-container">
+            <div class="auth-close" onclick="closeAccountModal()">
+                <i class="fas fa-times"></i>
+            </div>
+            <h2 style="margin-bottom: 20px; color: var(--turquoise);">My Account</h2>
+            
+            <div id="account-info">
+                <div class="form-group">
+                    <label>Username</label>
+                    <p id="account-username">Loading...</p>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <p id="account-email">Loading...</p>
+                </div>
+                <div class="form-group">
+                    <label>Questions Remaining Today</label>
+                    <p id="account-questions-remaining">Loading...</p>
+                </div>
+                <div class="form-group">
+                    <label>Account Status</label>
+                    <p id="account-status">Loading...</p>
+                </div>
+                
+                <button class="btn" style="width: 100%; margin-top: 20px;" onclick="logoutUser()">Logout</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div>
+                    <div class="footer-logo">Integrity</div>
+                    <p class="footer-description">A new way to interact with your digital history through intelligent AI.</p>
+                    <div class="social-links">
+                        <a href="#" class="social-link"><i class="fas fa-code-branch"></i></a>
+                        <a href="#" class="social-link"><i class="fas fa-terminal"></i></a>
+                        <a href="#" class="social-link"><i class="fas fa-project-diagram"></i></a>
+                    </div>
+                </div>
+                
+                <div class="footer-links">
+                    <h3>Product</h3>
+                    <ul>
+                        <li><a href="#about">About</a></li>
+                        <li><a href="#demo">Demo</a></li>
+                        <li><a href="#waitlist">Join Beta</a></li>
+                        <li><a href="#updates">Updates</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-links">
+                    <h3>Resources</h3>
+                    <ul>
+                        <li><a href="#">Documentation</a></li>
+                        <li><a href="#">FAQ</a></li>
+                        <li><a href="#security">Privacy Policy</a></li>
+                        <li><a href="#">Terms of Service</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-links">
+                    <h3>Connect</h3>
+                    <ul>
+                        <li><a href="#feedback">Feedback</a></li>
+                        <li><a href="#">Contact</a></li>
+                        <li><a href="#">Support</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="copyright">
+                &copy; 2025 Integrity. All rights reserved.
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Initialize the mycelium simulation on canvas
+        document.addEventListener('DOMContentLoaded', function() {
+            const canvas = document.getElementById('mycelium-canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Set canvas to full screen
+            function resizeCanvas() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+            
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+            
+            // Mycelium simulation parameters
+            const nodes = [];
+            const connections = [];
+            const nodeCount = 150; // Nodes in the network
+            const connectionDistance = 150; // Maximum distance for connections
+            const growthRate = 0.5;
+            const nodeSize = 2;
+            const maxConnections = 5;
+            const activeColor = '#40E0D0';
+            const inactiveColor = 'rgba(64, 224, 208, 0.2)';
+            const connectionColor = 'rgba(64, 224, 208, 0.15)';
+            const activeConnectionColor = 'rgba(64, 224, 208, 0.4)';
+            
+            // Create initial nodes with random positions
+            for (let i = 0; i < nodeCount; i++) {
+                nodes.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    size: nodeSize,
+                    energy: 0,
+                    active: false,
+                    connections: []
+                });
+            }
+            
+            // Create connections between nodes
+            for (let i = 0; i < nodes.length; i++) {
+                const node = nodes[i];
+                
+                // Find nearby nodes
+                for (let j = 0; j < nodes.length; j++) {
+                    if (i !== j && node.connections.length < maxConnections) {
+                        const otherNode = nodes[j];
+                        const dx = node.x - otherNode.x;
+                        const dy = node.y - otherNode.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        // Only connect if distance is within range and probability check passes
+                        if (distance < connectionDistance && Math.random() < 0.3 && otherNode.connections.length < maxConnections) {
+                            const connection = {
+                                from: i,
+                                to: j,
+                                energy: 0,
+                                active: false
+                            };
+                            
+                            connections.push(connection);
+                            node.connections.push(connections.length - 1);
+                            otherNode.connections.push(connections.length - 1);
+                        }
+                    }
+                }
+            }
+            
+            // Function to activate a node
+            function activateNode(index, energy = 1) {
+                const node = nodes[index];
+                node.active = true;
+                node.energy = Math.min(node.energy + energy, 1);
+                
+                // Spread energy to connected nodes
+                setTimeout(() => {
+                    spreadEnergy(index, energy * 0.8);
+                }, 300);
+            }
+            
+            // Spread energy to connected nodes
+            function spreadEnergy(nodeIndex, energy) {
+                if (energy < 0.1) return; // Stop if energy too low
+                
+                const node = nodes[nodeIndex];
+                
+                for (const connectionIndex of node.connections) {
+                    const connection = connections[connectionIndex];
+                    const targetNodeIndex = connection.from === nodeIndex ? connection.to : connection.from;
+                    const targetNode = nodes[targetNodeIndex];
+                    
+                    // Activate connection
+                    connection.active = true;
+                    connection.energy = Math.min(connection.energy + energy, 1);
+                    
+                    // Add energy to target node
+                    if (Math.random() < energy) { // Probability of energy transfer
+                        targetNode.active = true;
+                        targetNode.energy = Math.min(targetNode.energy + energy * 0.7, 1);
+                        
+                        // Continue spreading with reduced energy
+                        setTimeout(() => {
+                            spreadEnergy(targetNodeIndex, energy * 0.6);
+                        }, 300 + Math.random() * 200);
+                    }
+                }
+            }
+            
+            // Random activation of nodes
+            function randomActivation() {
+                const randomIndex = Math.floor(Math.random() * nodes.length);
+                activateNode(randomIndex);
+                
+                // Schedule next activation
+                setTimeout(randomActivation, 2000 + Math.random() * 3000);
+            }
+            
+            // Initial activations to kick-start the network
+            for (let i = 0; i < 10; i++) {
+                setTimeout(() => {
+                    const randomIndex = Math.floor(Math.random() * nodes.length);
+                    activateNode(randomIndex);
+                }, i * 500);
+            }
+            
+            // Start random activations
+            setTimeout(randomActivation, 2000);
+            
+            // Handle mouse movement - drop "nutrients" every 3 seconds
+            let lastNutrientTime = 0;
+            document.addEventListener('mousemove', function(e) {
+                const now = Date.now();
+                if (now - lastNutrientTime > 3000) { // 3 seconds
+                    lastNutrientTime = now;
+                    dropNutrient(e.clientX, e.clientY);
+                }
+            });
+            
+            // Drop nutrient at position
+            function dropNutrient(x, y) {
+                // Visual effect for nutrient
+                const nutrientEffect = document.createElement('div');
+                nutrientEffect.style.position = 'absolute';
+                nutrientEffect.style.left = x + 'px';
+                nutrientEffect.style.top = y + 'px';
+                nutrientEffect.style.width = '10px';
+                nutrientEffect.style.height = '10px';
+                nutrientEffect.style.backgroundColor = 'rgba(64, 224, 208, 0.7)';
+                nutrientEffect.style.borderRadius = '50%';
+                nutrientEffect.style.pointerEvents = 'none';
+                nutrientEffect.style.zIndex = '10';
+                nutrientEffect.style.boxShadow = '0 0 15px rgba(64, 224, 208, 0.5)';
+                document.body.appendChild(nutrientEffect);
+                
+                // Animate and remove
+                nutrientEffect.animate(
+                    [
+                        { transform: 'scale(0)', opacity: 0.8 },
+                        { transform: 'scale(3)', opacity: 0 }
+                    ],
+                    {
+                        duration: 2000,
+                        easing: 'ease-out'
+                    }
+                );
+                
+                setTimeout(() => {
+                    document.body.removeChild(nutrientEffect);
+                }, 2000);
+                
+                // Find nearby nodes to activate
+                const radius = 150;
+                let closestNode = null;
+                let closestDistance = radius;
+                
+                for (let i = 0; i < nodes.length; i++) {
+                    const node = nodes[i];
+                    const dx = x - node.x;
+                    const dy = y - node.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance < closestDistance) {
+                        closestNode = i;
+                        closestDistance = distance;
+                    }
+                }
+                
+                if (closestNode !== null) {
+                    activateNode(closestNode);
+                }
+                
+                // Also activate random nodes in vicinity
+                for (let i = 0; i < nodes.length; i++) {
+                    const node = nodes[i];
+                    const dx = x - node.x;
+                    const dy = y - node.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance < radius && Math.random() < 0.5) {
+                        const energy = 1 - (distance / radius);
+                        activateNode(i, energy);
+                    }
+                }
+            }
+            
+            // Automatic drop of nutrients at fixed intervals
+            setInterval(() => {
+                const x = Math.random() * canvas.width;
+                const y = Math.random() * canvas.height;
+                dropNutrient(x, y);
+            }, 5000);
+            
+            // Draw function
+            function draw() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw connections
+                for (const connection of connections) {
+                    const fromNode = nodes[connection.from];
+                    const toNode = nodes[connection.to];
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(fromNode.x, fromNode.y);
+                    ctx.lineTo(toNode.x, toNode.y);
+                    
+                    // Connection color based on energy
+                    if (connection.active) {
+                        ctx.strokeStyle = activeConnectionColor;
+                        ctx.globalAlpha = connection.energy * 0.8 + 0.2;
+                    } else {
+                        ctx.strokeStyle = connectionColor;
+                        ctx.globalAlpha = 0.2;
+                    }
+                    
+                    ctx.lineWidth = connection.active ? 1.5 : 0.5;
+                    ctx.stroke();
+                    ctx.globalAlpha = 1;
+                }
+                
+                // Draw nodes
+                for (const node of nodes) {
+                    ctx.beginPath();
+                    ctx.arc(node.x, node.y, node.size + (node.active ? node.energy * 2 : 0), 0, Math.PI * 2);
+                    
+                    // Node color based on energy
+                    if (node.active) {
+                        ctx.fillStyle = activeColor;
+                        ctx.globalAlpha = node.energy * 0.8 + 0.2;
+                        
+                        // Glow effect for active nodes
+                        ctx.shadowColor = activeColor;
+                        ctx.shadowBlur = 10 * node.energy;
+                    } else {
+                        ctx.fillStyle = inactiveColor;
+                        ctx.globalAlpha = 0.5;
+                        ctx.shadowBlur = 0;
+                    }
+                    
+                    ctx.fill();
+                    ctx.globalAlpha = 1;
+                    ctx.shadowBlur = 0;
+                }
+                
+                // Decay energy over time
+                for (const node of nodes) {
+                    if (node.energy > 0) {
+                        node.energy -= 0.002;
+                        if (node.energy <= 0) {
+                            node.energy = 0;
+                            node.active = false;
+                        }
+                    }
+                }
+                
+                for (const connection of connections) {
+                    if (connection.energy > 0) {
+                        connection.energy -= 0.003;
+                        if (connection.energy <= 0) {
+                            connection.energy = 0;
+                            connection.active = false;
+                        }
+                    }
+                }
+                
+                requestAnimationFrame(draw);
+            }
+            
+            // Start drawing
+            draw();
+        });
+
+        // Chat interface interactions
+        document.addEventListener('DOMContentLoaded', function() {
+            const chatInput = document.querySelector('.chat-input');
+            const chatMessages = document.querySelector('.chat-messages');
+            
+            document.querySelector('.chat-send-btn').addEventListener('click', function() {
+                sendMessage();
+            });
+            
+            chatInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    sendMessage();
+                }
+            });
+            
+            function sendMessage() {
+                const message = chatInput.value.trim();
+                if (message === '') return;
+                
+                // Add user message
+                const userMsg = document.createElement('div');
+                userMsg.className = 'chat-message user';
+                userMsg.innerHTML = `
+                    <div class="message-content">${message}</div>
+                    <div class="message-time">${getCurrentTime()}</div>
+                `;
+                chatMessages.appendChild(userMsg);
+                
+                // Clear input
+                chatInput.value = '';
+                
+                // Scroll to bottom
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                
+                // Show typing indicator
+                const typingMsg = document.createElement('div');
+                typingMsg.className = 'chat-message assistant typing';
+                typingMsg.innerHTML = `
+                    <div class="typing-indicator">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                `;
+                chatMessages.appendChild(typingMsg);
+                
+                // Scroll to bottom
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                
+                // Generate response after delay
+                setTimeout(() => {
+                    // Remove typing indicator
+                    chatMessages.removeChild(typingMsg);
+                    
+                    // Add assistant response
+                    const assistantMsg = document.createElement('div');
+                    assistantMsg.className = 'chat-message assistant';
+                    
+                    // Generate response based on user query
+                    let response = '';
+                    if (message.toLowerCase().includes('work') || message.toLowerCase().includes('doing')) {
+                        response = "Based on your activity patterns, you've been focused on the marketing proposal for the past 3 days. I can see you've spent about 14 hours total across Google Docs, PowerPoint, and research tabs. Would you like me to summarize the key documents you've been working with?";
+                    } else if (message.toLowerCase().includes('find') || message.toLowerCase().includes('search')) {
+                        response = "I've located several items matching your search:<ul><li>Marketing_Proposal_Draft2.docx (edited yesterday at 3:15 PM)</li><li>Q1_Budget_Forecast.xlsx (edited 2 days ago)</li><li>Competitor_Analysis.pdf (viewed yesterday at 5:20 PM)</li></ul>Which would you like me to open?";
+                    } else if (message.toLowerCase().includes('remind') || message.toLowerCase().includes('schedule')) {
+                        response = "I've set a reminder for you. I'll notify you about the marketing team meeting tomorrow at 10:00 AM. Would you like me to gather the relevant documents beforehand?";
+                    } else {
+                        response = "I've analyzed your recent digital activities and noticed you've been context-switching frequently between your coding project and marketing tasks. Would you like me to help you organize these workflows better or focus on one of these specific areas?";
+                    }
+                    
+                    assistantMsg.innerHTML = `
+                        <div class="message-content">${response}</div>
+                        <div class="message-time">${getCurrentTime()}</div>
+                    `;
+                    
+                    chatMessages.appendChild(assistantMsg);
+                    
+                    // Scroll to bottom
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                }, 1500);
+            }
+            
+            function getCurrentTime() {
+                const now = new Date();
+                let hours = now.getHours();
+                const minutes = now.getMinutes().toString().padStart(2, '0');
+                const ampm = hours >= 12 ? 'PM' : 'AM';
+                hours = hours % 12;
+                hours = hours ? hours : 12;
+                return `${hours}:${minutes} ${ampm}`;
+            }
+        });
+
+        // Terminal typing animation
+        document.addEventListener('DOMContentLoaded', function() {
+            const terminalContent = document.getElementById('terminal-content');
+            const commands = [
+                { cmd: "how much time did I spend on social media last week?", 
+                response: "Last week you spent 5.3 hours on social media applications:<br>- Instagram: 2.1 hours<br>- Twitter: 1.8 hours<br>- LinkedIn: 1.4 hours<br><br>This is a 15% decrease from your previous week." },
+                { cmd: "summarize my work on the marketing presentation", 
+                response: "You've spent a total of 4.2 hours on the marketing presentation across the past 3 days:<br><br>Main activities:<br>- Content editing in PowerPoint (2.5 hours)<br>- Research on competitor websites (1 hour)<br>- Image searching and editing (0.7 hours)<br><br>You last worked on slide 12 (Budget Allocation) yesterday at 4:15 PM." }
+            ];
+            
+            let cmdIndex = 0;
+            let charIndex = 0;
+            let isTyping = false;
+            let currentCommand = null;
+            
+            function typeCommand() {
+                if (cmdIndex >= commands.length) {
+                    return;
+                }
+                
+                currentCommand = commands[cmdIndex];
+                isTyping = true;
+                
+                const commandElem = document.createElement('div');
+                commandElem.className = 'command';
+                const promptSpan = document.createElement('span');
+                promptSpan.className = 'prompt';
+                promptSpan.textContent = 'user@integrity:~$ ';
+                commandElem.appendChild(promptSpan);
+                
+                const typingSpan = document.createElement('span');
+                typingSpan.className = 'typing-text';
+                commandElem.appendChild(typingSpan);
+                
+                // Replace the last command (with cursor) with this new one
+                const lastCommand = terminalContent.querySelector('.command:last-child');
+                terminalContent.replaceChild(commandElem, lastCommand);
+                
+                typeCharacter(typingSpan, currentCommand.cmd, 0, function() {
+                    isTyping = false;
+                    setTimeout(showResponse, 500);
+                });
+            }
+            
+            function typeCharacter(element, text, index, callback) {
+                if (index < text.length) {
+                    element.textContent += text.charAt(index);
+                    setTimeout(function() {
+                        typeCharacter(element, text, index + 1, callback);
+                    }, Math.random() * 70 + 30);
+                } else {
+                    callback();
+                }
+            }
+            
+            function showResponse() {
+                const responseElem = document.createElement('div');
+                responseElem.className = 'response';
+                responseElem.innerHTML = currentCommand.response;
+                terminalContent.appendChild(responseElem);
+                
+                // Add new command line with cursor
+                const newCommandElem = document.createElement('div');
+                newCommandElem.className = 'command';
+                const promptSpan = document.createElement('span');
+                promptSpan.className = 'prompt';
+                promptSpan.textContent = 'user@integrity:~$ ';
+                newCommandElem.appendChild(promptSpan);
+                
+                const cursorSpan = document.createElement('span');
+                cursorSpan.className = 'cursor';
+                newCommandElem.appendChild(cursorSpan);
+                
+                terminalContent.appendChild(newCommandElem);
+                
+                // Scroll to bottom
+                terminalContent.scrollTop = terminalContent.scrollHeight;
+                
+                cmdIndex++;
+                setTimeout(function() {
+                    if (!isTyping) {
+                        typeCommand();
+                    }
+                }, 3000);
+            }
+            
+            // Start the typing animation after a delay
+            setTimeout(typeCommand, 2000);
+        });
+
+        // Auth Modal Functions
+        function openAuthModal() {
+            document.getElementById('authModal').classList.add('active');
+        }
+
+        function closeAuthModal() {
+            document.getElementById('authModal').classList.remove('active');
+        }
+
+        function switchAuthTab(tab) {
+            // Update tabs
+            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+            document.querySelector(`.auth-tab:${tab === 'login' ? 'first-child' : 'last-child'}`).classList.add('active');
+            
+            // Update forms
+            document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+            document.getElementById(`${tab}Form`).classList.add('active');
+        }
+
+        // Handle form submissions
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            // Add login logic here
+            closeAuthModal();
+        });
+
+        document.getElementById('signupForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const name = this.querySelector('input[type="text"]').value;
+            const email = this.querySelector('input[type="email"]').value;
+            const password = this.querySelector('input[type="password"]').value;
+            
+            // Call the registration API
+            fetch('/api/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    username: name,
+                    email: email,
+                    password: password
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.token) {
+                    // Store the token
+                    localStorage.setItem('integrity_token', data.token);
+                    localStorage.setItem('integrity_user_id', data.user_id);
+                    
+                    // Show success message
+                    alert('Account created successfully! You can now download Integrity Assistant.');
+                    
+                    // Close the modal
+                    closeAuthModal();
+                    
+                    // Redirect to download section
+                    window.location.href = '#download';
+                } else {
+                    alert('Error: ' + (data.error || 'Unknown error occurred'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred during registration. Please try again later.');
+            });
+        });
+
+        // Function to check if user is logged in
+        function checkUserAuth() {
+            const token = localStorage.getItem('integrity_token');
+            if (token) {
+                document.querySelector('.signup-btn').textContent = 'My Account';
+                document.querySelector('.signup-btn').href = '#account';
+                document.querySelector('.signup-btn').onclick = openAccountModal;
+            }
+        }
+        
+        // Check auth on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            checkUserAuth();
+            // Other existing DOMContentLoaded code...
+        });
+        
+        function openAccountModal() {
+            document.getElementById('accountModal').classList.add('active');
+            
+            // Fetch user account details
+            const token = localStorage.getItem('integrity_token');
+            const userId = localStorage.getItem('integrity_user_id');
+            
+            if (token && userId) {
+                fetch('/api/daily-limit?user_id=' + userId, {
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('account-questions-remaining').textContent = data.remaining + ' of ' + data.total_limit;
+                    
+                    // For demo purposes, we'll use placeholder data for the other fields
+                    document.getElementById('account-username').textContent = 'User_' + userId.substring(0, 5);
+                    document.getElementById('account-email').textContent = 'user' + userId.substring(0, 3) + '@example.com';
+                    document.getElementById('account-status').textContent = 'Active';
+                })
+                .catch(error => {
+                    console.error('Error fetching account data:', error);
+                });
+            }
+            
+            return false;
+        }
+        
+        function closeAccountModal() {
+            document.getElementById('accountModal').classList.remove('active');
+        }
+        
+        function logoutUser() {
+            localStorage.removeItem('integrity_token');
+            localStorage.removeItem('integrity_user_id');
+            document.querySelector('.signup-btn').textContent = 'Sign Up';
+            document.querySelector('.signup-btn').href = '#';
+            document.querySelector('.signup-btn').onclick = function() { openAuthModal(); return false; };
+            closeAccountModal();
+            alert('You have been logged out successfully.');
+        }
+    </script>
+</body>
+</html>

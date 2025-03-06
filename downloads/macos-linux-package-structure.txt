@@ -1,0 +1,12 @@
+macOS/Linux Package Structure:
+
+integrity-assistant-macos.zip / integrity-assistant-linux.zip
+|-- install.sh
+|-- integrity_main.py
+|-- integrity_ui.py
+|-- integrity_core.py
+|-- integrity_api.py
+|-- requirements.txt
+|-- readme.txt
+|-- icon.png (application icon)
+|-- license.txt 

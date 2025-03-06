@@ -1,0 +1,21 @@
+This file is a placeholder for the Windows executable.
+
+Integrity Assistant is distributed as a ZIP file containing the necessary 
+Python scripts and installation files rather than as a single executable.
+
+To install Integrity Assistant:
+
+1. Download the appropriate ZIP file from the website:
+   - For Windows: integrity-assistant-windows.zip
+   - For macOS: integrity-assistant-macos.zip
+   - For Linux: integrity-assistant-linux.zip
+
+2. Extract the ZIP file to a location of your choice
+
+3. Run the appropriate installer:
+   - Windows: IntegrityAssistant.bat or install.bat
+   - macOS/Linux: IntegrityAssistant.sh or install.sh
+
+This approach allows for more flexibility and compatibility across different
+system configurations while ensuring that the application has access to all
+necessary dependencies. 
