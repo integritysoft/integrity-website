@@ -8,6 +8,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Supabase JS Client -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <style>
         :root {
             --turquoise: #00E5FF;
@@ -2257,38 +2259,34 @@
             document.getElementById(`${tab}Form`).classList.add('active');
         }
 
-        // Handle form submissions
-        document.getElementById('loginForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            // Add login logic here
-            closeAuthModal();
-        });
+        // Initialize Supabase client
+        const supabaseUrl = 'https://qamcmtaupcztangqvhkz.supabase.co'; // Replace with your Supabase URL
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhbWNtdGF1cGN6dGFuZ3F2aGt6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDEyMzc0MTMsImV4cCI6MjA1NjgxMzQxM30.UWinrT5vTh0P7GcXRL2dgP6IEkPQ83Ur1kghe-lm1Mg'; // Replace with your Supabase anon key
+        const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
-        document.getElementById('signupForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const name = this.querySelector('input[type="text"]').value;
-            const email = this.querySelector('input[type="email"]').value;
-            const password = this.querySelector('input[type="password"]').value;
-            
-            // Call the registration API
-            fetch('/api/register', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    username: name,
+        // Supabase auth functions
+        async function signUpWithSupabase(email, password, username) {
+            try {
+                // Register the user with Supabase
+                const { data: authData, error: authError } = await supabaseClient.auth.signUp({
                     email: email,
-                    password: password
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.token) {
-                    // Store the token
-                    localStorage.setItem('integrity_token', data.token);
-                    localStorage.setItem('integrity_user_id', data.user_id);
+                    password: password,
+                    options: {
+                        data: {
+                            username: username,
+                            questions_limit: 10, // Default daily questions limit
+                            questions_used: 0,
+                            created_at: new Date().toISOString()
+                        }
+                    }
+                });
+
+                if (authError) throw authError;
+
+                // Store the session data
+                if (authData && authData.user) {
+                    localStorage.setItem('integrity_token', authData.session.access_token);
+                    localStorage.setItem('integrity_user_id', authData.user.id);
                     
                     // Show success message
                     alert('Account created successfully! You can now download Integrity Assistant.');
@@ -2298,23 +2296,263 @@
                     
                     // Redirect to download section
                     window.location.href = '#download';
-                } else {
-                    alert('Error: ' + (data.error || 'Unknown error occurred'));
+                    
+                    // Update the UI to show logged in state
+                    updateAuthUI(true);
                 }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('An error occurred during registration. Please try again later.');
-            });
+                
+                return { success: true, data: authData };
+            } catch (error) {
+                console.error('Signup error:', error);
+                return { success: false, error: error.message };
+            }
+        }
+
+        async function loginWithSupabase(email, password) {
+            try {
+                const { data: authData, error: authError } = await supabaseClient.auth.signInWithPassword({
+                    email: email,
+                    password: password
+                });
+
+                if (authError) throw authError;
+
+                if (authData && authData.user) {
+                    localStorage.setItem('integrity_token', authData.session.access_token);
+                    localStorage.setItem('integrity_user_id', authData.user.id);
+                    
+                    // Close the modal
+                    closeAuthModal();
+                    
+                    // Update the UI to show logged in state
+                    updateAuthUI(true);
+                }
+                
+                return { success: true, data: authData };
+            } catch (error) {
+                console.error('Login error:', error);
+                return { success: false, error: error.message };
+            }
+        }
+
+        async function logoutWithSupabase() {
+            try {
+                const { error } = await supabaseClient.auth.signOut();
+                if (error) throw error;
+                
+                localStorage.removeItem('integrity_token');
+                localStorage.removeItem('integrity_user_id');
+                
+                // Update the UI to show logged out state
+                updateAuthUI(false);
+                
+                closeAccountModal();
+                alert('You have been logged out successfully.');
+                
+                return { success: true };
+            } catch (error) {
+                console.error('Logout error:', error);
+                return { success: false, error: error.message };
+            }
+        }
+
+        async function getUserData() {
+            try {
+                const { data: { user }, error } = await supabaseClient.auth.getUser();
+                
+                if (error) throw error;
+                
+                if (user) {
+                    // Get user metadata from user_metadata table
+                    const { data: userData, error: metadataError } = await supabaseClient
+                        .from('user_profiles')
+                        .select('*')
+                        .eq('user_id', user.id)
+                        .single();
+                        
+                    if (metadataError && metadataError.code !== 'PGRST116') {
+                        // PGRST116 is the error for no rows returned
+                        throw metadataError;
+                    }
+                    
+                    return { 
+                        success: true, 
+                        user: {
+                            ...user,
+                            profile: userData || null
+                        } 
+                    };
+                }
+                
+                return { success: false, error: 'No user found' };
+            } catch (error) {
+                console.error('Get user error:', error);
+                return { success: false, error: error.message };
+            }
+        }
+
+        async function updateUserDailyLimit() {
+            try {
+                const { success, user, error } = await getUserData();
+                if (!success) throw new Error(error);
+                
+                let dailyLimit = 10; // Default limit
+                let questionsUsed = 0;
+                
+                if (user.profile) {
+                    dailyLimit = user.profile.questions_limit || 10;
+                    questionsUsed = user.profile.questions_used || 0;
+                    
+                    // Check if we need to reset the counter (new day)
+                    const lastUpdate = user.profile.last_question_time 
+                        ? new Date(user.profile.last_question_time) 
+                        : new Date();
+                    const today = new Date();
+                    
+                    if (lastUpdate.getDate() !== today.getDate() || 
+                        lastUpdate.getMonth() !== today.getMonth() || 
+                        lastUpdate.getFullYear() !== today.getFullYear()) {
+                        // Reset for new day
+                        questionsUsed = 0;
+                    }
+                } else {
+                    // Create a profile for the user if it doesn't exist
+                    await supabaseClient
+                        .from('user_profiles')
+                        .insert({
+                            user_id: user.id,
+                            username: user.user_metadata.username || `User_${user.id.substring(0, 5)}`,
+                            questions_limit: dailyLimit,
+                            questions_used: questionsUsed,
+                            last_question_time: new Date().toISOString()
+                        });
+                }
+                
+                // Return the daily limit data
+                return {
+                    success: true,
+                    data: {
+                        remaining: dailyLimit - questionsUsed,
+                        total_limit: dailyLimit,
+                        used: questionsUsed
+                    }
+                };
+            } catch (error) {
+                console.error('Update daily limit error:', error);
+                return { success: false, error: error.message };
+            }
+        }
+
+        // Function to increment the question count when user asks a question
+        async function incrementQuestionCount() {
+            try {
+                const { success, user, error } = await getUserData();
+                if (!success) throw new Error(error);
+                
+                if (!user.profile) {
+                    // Create a profile if it doesn't exist
+                    await updateUserDailyLimit();
+                    return { success: true };
+                }
+                
+                // Increment the question count
+                const { data, error: updateError } = await supabaseClient
+                    .from('user_profiles')
+                    .update({ 
+                        questions_used: (user.profile.questions_used || 0) + 1,
+                        last_question_time: new Date().toISOString()
+                    })
+                    .eq('user_id', user.id);
+                
+                if (updateError) throw updateError;
+                
+                return { success: true };
+            } catch (error) {
+                console.error('Increment question count error:', error);
+                return { success: false, error: error.message };
+            }
+        }
+
+        // Update UI function to reflect auth state
+        function updateAuthUI(isLoggedIn) {
+            if (isLoggedIn) {
+                document.querySelector('.signup-btn').textContent = 'My Account';
+                document.querySelector('.signup-btn').href = '#account';
+                document.querySelector('.signup-btn').onclick = function() { openAccountModal(); return false; };
+            } else {
+                document.querySelector('.signup-btn').textContent = 'Sign Up';
+                document.querySelector('.signup-btn').href = '#';
+                document.querySelector('.signup-btn').onclick = function() { openAuthModal(); return false; };
+            }
+        }
+
+        // Handle form submissions
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const email = this.querySelector('input[type="email"]').value;
+            const password = this.querySelector('input[type="password"]').value;
+            
+            // Show loading state
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = 'Logging in...';
+            submitBtn.disabled = true;
+            
+            // Attempt login
+            const { success, error } = await loginWithSupabase(email, password);
+            
+            // Reset button state
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
+            
+            if (!success) {
+                alert('Login failed: ' + error);
+            }
+        });
+
+        document.getElementById('signupForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const name = this.querySelector('input[type="text"]').value;
+            const email = this.querySelector('input[type="email"]').value;
+            const password = this.querySelector('input[type="password"]').value;
+            const confirmPassword = this.querySelectorAll('input[type="password"]')[1].value;
+            
+            if (password !== confirmPassword) {
+                alert('Passwords do not match!');
+                return;
+            }
+            
+            // Show loading state
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = 'Creating account...';
+            submitBtn.disabled = true;
+            
+            // Attempt signup
+            const { success, error } = await signUpWithSupabase(email, password, name);
+            
+            // Reset button state
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
+            
+            if (!success) {
+                alert('Signup failed: ' + error);
+            }
         });
 
         // Function to check if user is logged in
-        function checkUserAuth() {
-            const token = localStorage.getItem('integrity_token');
-            if (token) {
-                document.querySelector('.signup-btn').textContent = 'My Account';
-                document.querySelector('.signup-btn').href = '#account';
-                document.querySelector('.signup-btn').onclick = openAccountModal;
+        async function checkUserAuth() {
+            const { data, error } = await supabaseClient.auth.getSession();
+            
+            if (data && data.session) {
+                updateAuthUI(true);
+                return true;
+            } else {
+                // No active session
+                updateAuthUI(false);
+                return false;
             }
         }
         
@@ -2327,29 +2565,33 @@
         function openAccountModal() {
             document.getElementById('accountModal').classList.add('active');
             
-            // Fetch user account details
-            const token = localStorage.getItem('integrity_token');
-            const userId = localStorage.getItem('integrity_user_id');
+            // Reset account fields to loading state
+            document.getElementById('account-username').textContent = 'Loading...';
+            document.getElementById('account-email').textContent = 'Loading...';
+            document.getElementById('account-questions-remaining').textContent = 'Loading...';
+            document.getElementById('account-status').textContent = 'Loading...';
             
-            if (token && userId) {
-                fetch('/api/daily-limit?user_id=' + userId, {
-                    headers: {
-                        'Authorization': 'Bearer ' + token
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById('account-questions-remaining').textContent = data.remaining + ' of ' + data.total_limit;
-                    
-                    // For demo purposes, we'll use placeholder data for the other fields
-                    document.getElementById('account-username').textContent = 'User_' + userId.substring(0, 5);
-                    document.getElementById('account-email').textContent = 'user' + userId.substring(0, 3) + '@example.com';
+            // Get user data
+            getUserData().then(({ success, user, error }) => {
+                if (success && user) {
+                    document.getElementById('account-username').textContent = user.user_metadata.username || `User_${user.id.substring(0, 5)}`;
+                    document.getElementById('account-email').textContent = user.email;
                     document.getElementById('account-status').textContent = 'Active';
-                })
-                .catch(error => {
-                    console.error('Error fetching account data:', error);
-                });
-            }
+                    
+                    // Get daily limit data
+                    updateUserDailyLimit().then(({ success: limitSuccess, data: limitData, error: limitError }) => {
+                        if (limitSuccess) {
+                            document.getElementById('account-questions-remaining').textContent = 
+                                `${limitData.remaining} of ${limitData.total_limit}`;
+                        } else {
+                            document.getElementById('account-questions-remaining').textContent = 'Error loading limit';
+                        }
+                    });
+                } else {
+                    // If we can't get user data, they're probably not logged in
+                    logoutUser();
+                }
+            });
             
             return false;
         }
@@ -2359,13 +2601,7 @@
         }
         
         function logoutUser() {
-            localStorage.removeItem('integrity_token');
-            localStorage.removeItem('integrity_user_id');
-            document.querySelector('.signup-btn').textContent = 'Sign Up';
-            document.querySelector('.signup-btn').href = '#';
-            document.querySelector('.signup-btn').onclick = function() { openAuthModal(); return false; };
-            closeAccountModal();
-            alert('You have been logged out successfully.');
+            logoutWithSupabase();
         }
     </script>
 </body>
