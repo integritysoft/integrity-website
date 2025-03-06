@@ -12,10 +12,10 @@
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <style>
         :root {
-            --turquoise: #00E5FF;
-            --turquoise-dark: #00B8D4;
-            --turquoise-light: #84FFFF;
-            --turquoise-glow: rgba(0, 229, 255, 0.4);
+            --turquoise: #00D4A0;
+            --turquoise-dark: #00B89A;
+            --turquoise-light: #6DFFD1;
+            --turquoise-glow: rgba(0, 212, 160, 0.4);
             --black: #000;
             --dark-gray: #111;
             --gray: #333;
@@ -862,29 +862,71 @@
 
         /* Feedback Section */
         .feedback-container {
-            max-width: 700px;
+            max-width: 600px;
             margin: 0 auto;
+        }
+        
+        .feedback-form {
+            background-color: rgba(0, 0, 0, 0.7);
+            border: 1px solid var(--turquoise);
+            border-radius: 8px;
+            padding: 30px;
         }
         
         .feedback-form textarea {
             width: 100%;
-            padding: 16px;
-            background-color: rgba(0, 0, 0, 0.3);
-            border: 1px solid var(--gray);
+            height: 150px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(0, 212, 160, 0.3);
             border-radius: 4px;
+            padding: 12px;
+            margin-bottom: 20px;
             color: white;
             font-family: 'IBM Plex Mono', monospace;
             resize: vertical;
-            min-height: 150px;
-            margin-bottom: 30px;
-            margin-top: 20px;
-            transition: all 0.3s ease;
         }
         
         .feedback-form textarea:focus {
             outline: none;
+            box-shadow: 0 0 10px var(--turquoise-glow);
             border-color: var(--turquoise);
-            box-shadow: 0 0 0 2px var(--turquoise-glow);
+        }
+        
+        .feedback-form .btn {
+            width: 100%;
+        }
+        
+        .feedback-form select {
+            width: 100%;
+            padding: 12px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(0, 212, 160, 0.3);
+            border-radius: 4px;
+            color: white;
+            font-family: 'IBM Plex Mono', monospace;
+            appearance: none;
+            position: relative;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2300D4A0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 16px;
+        }
+        
+        .feedback-form select:focus {
+            outline: none;
+            box-shadow: 0 0 10px var(--turquoise-glow);
+            border-color: var(--turquoise);
+        }
+        
+        .feedback-success {
+            display: none;
+            background-color: rgba(0, 212, 160, 0.1);
+            color: var(--turquoise);
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 20px;
+            text-align: center;
+            border: 1px solid var(--turquoise);
         }
 
         /* Footer */
@@ -1296,6 +1338,60 @@
             z-index: -1;
             transform: scale(1.5);
         }
+        
+        /* Call to Action Section */
+        .cta-section {
+            background-color: var(--dark-gray);
+            padding: 100px 0;
+            text-align: center;
+            position: relative;
+        }
+        
+        .cta-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, rgba(0, 212, 160, 0.05), transparent 70%);
+            z-index: 0;
+            opacity: 0.8;
+        }
+        
+        .cta-container {
+            position: relative;
+            z-index: 1;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        
+        .cta-title {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            color: white;
+        }
+        
+        .cta-description {
+            color: var(--light-gray);
+            margin-bottom: 40px;
+            font-size: 1.2rem;
+        }
+        
+        .cta-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+        
+        .cta-btn {
+            padding: 15px 30px;
+            font-size: 1.1rem;
+        }
+        
+        .cta-btn-alt {
+            border-width: 2px;
+        }
     </style>
 </head>
 <body>
@@ -1341,7 +1437,7 @@
             <h2 class="section-title">What is Integrity?</h2>
             <p>Integrity is a revolutionary software that passively monitors and understands your digital activity across devices. Using advanced AI, it creates a searchable, interactive log of your digital life that you can query using natural language.</p>
             
-            <div class="features">
+            <div id="features" class="features">
                 <div class="feature-card">
                     <div class="feature-icon">
                         <i class="fas fa-search"></i>
@@ -1610,39 +1706,62 @@
             
             <div class="feedback-container">
                 <div class="feedback-form">
-                    <textarea placeholder="Share your feedback, feature requests, or use cases..."></textarea>
-                    <button class="btn">Submit Feedback</button>
+                    <div class="form-group">
+                        <label for="feedback-name">Name</label>
+                        <input type="text" id="feedback-name" placeholder="Your name">
+                    </div>
+                    <div class="form-group">
+                        <label for="feedback-email">Email</label>
+                        <input type="email" id="feedback-email" placeholder="Your email address">
+                    </div>
+                    <div class="form-group">
+                        <label for="feedback-type">Feedback Type</label>
+                        <select id="feedback-type">
+                            <option value="feature">Feature Request</option>
+                            <option value="bug">Bug Report</option>
+                            <option value="general">General Feedback</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="feedback-text">Your Feedback</label>
+                        <textarea id="feedback-text" placeholder="Share your feedback, feature requests, or use cases..."></textarea>
+                    </div>
+                    <button class="btn" onclick="submitFeedback()">Submit Feedback</button>
+                    <div id="feedback-success" class="feedback-success">
+                        Thank you for your feedback! We appreciate your input.
+                    </div>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- Download Section -->
-    <section class="download-section">
+    <section id="download" class="download-section">
         <div class="container">
             <div class="download-container">
                 <h2 class="download-title">Download Integrity Assistant</h2>
                 <p class="download-description">Get started with Integrity Assistant 0.1.2 Public Alpha today.</p>
-                <a href="downloads/IntegrityAssistant-0.1.2-PublicAlpha.exe" class="download-btn">
+                <a href="downloads/IntegrityAssistant-0.1.2-PublicAlpha.exe" class="download-btn" onclick="trackDownload('windows')">
                     <i class="fas fa-download"></i>
                     Download Integrity Assistant
                 </a>
                 <p class="download-note">Simply download and run the executable to install Integrity Assistant on your Windows computer.</p>
                 
-                <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid rgba(64, 224, 208, 0.2);">
+                <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid rgba(0, 212, 160, 0.2);">
                     <h3 style="color: var(--turquoise); margin-bottom: 15px;">Alternative Downloads</h3>
                     <p style="margin-bottom: 20px; font-size: 0.9rem;">For advanced users or specific system requirements, you can also download the package versions:</p>
                     <div class="download-options">
-                        <a href="downloads/integrity-assistant-windows.zip" class="download-btn download-btn-alt">
-                            <i class="fas fa-windows"></i>
+                        <a href="downloads/integrity-assistant-windows.zip" class="download-btn download-btn-alt" onclick="trackDownload('windows-zip')">
+                            <i class="fab fa-windows"></i>
                             Windows Package
                         </a>
-                        <a href="downloads/integrity-assistant-macos.zip" class="download-btn download-btn-alt">
-                            <i class="fas fa-apple"></i>
+                        <a href="downloads/integrity-assistant-macos.zip" class="download-btn download-btn-alt" onclick="trackDownload('macos-zip')">
+                            <i class="fab fa-apple"></i>
                             macOS Package
                         </a>
-                        <a href="downloads/integrity-assistant-linux.zip" class="download-btn download-btn-alt">
-                            <i class="fas fa-linux"></i>
+                        <a href="downloads/integrity-assistant-linux.zip" class="download-btn download-btn-alt" onclick="trackDownload('linux-zip')">
+                            <i class="fab fa-linux"></i>
                             Linux Package
                         </a>
                     </div>
@@ -1714,6 +1833,20 @@
             </div>
         </div>
     </div>
+
+    <!-- Call to Action -->
+    <section id="cta" class="cta-section">
+        <div class="container">
+            <div class="cta-container">
+                <h2 class="cta-title">Ready to Transform Your Digital Experience?</h2>
+                <p class="cta-description">Join thousands of users who are already benefiting from Integrity's powerful AI assistant.</p>
+                <div class="cta-buttons">
+                    <a href="#download" class="btn cta-btn">Download Now</a>
+                    <a href="#features" class="btn btn-outline cta-btn-alt">Learn More</a>
+                </div>
+            </div>
+        </div>
+    </section>
 
     <!-- Footer -->
     <footer>
@@ -2601,7 +2734,57 @@
         }
         
         function logoutUser() {
-            logoutWithSupabase();
+            localStorage.removeItem('integrity_token');
+            localStorage.removeItem('integrity_user_id');
+            document.querySelector('.signup-btn').textContent = 'Sign Up';
+            document.querySelector('.signup-btn').href = '#';
+            document.querySelector('.signup-btn').onclick = function() { openAuthModal(); return false; };
+            closeAccountModal();
+            alert('You have been logged out successfully.');
+        }
+        
+        // Track downloads
+        function trackDownload(type) {
+            console.log('Download tracked:', type);
+            
+            // If logged in, record the download in Supabase
+            const userId = localStorage.getItem('integrity_user_id');
+            const token = localStorage.getItem('integrity_token');
+            
+            if (userId && token) {
+                // Record the download in Supabase using usage_tracking table
+                // This is a placeholder for actual implementation
+                console.log('User logged in, tracking download for user:', userId);
+            }
+        }
+        
+        // Handle feedback form submission
+        function submitFeedback() {
+            const name = document.getElementById('feedback-name').value;
+            const email = document.getElementById('feedback-email').value;
+            const type = document.getElementById('feedback-type').value;
+            const text = document.getElementById('feedback-text').value;
+            
+            if (!name || !email || !text) {
+                alert('Please fill in all required fields');
+                return;
+            }
+            
+            // In a real implementation, you would send this data to your server
+            console.log('Feedback submitted:', { name, email, type, text });
+            
+            // Show success message
+            document.getElementById('feedback-success').style.display = 'block';
+            
+            // Clear the form
+            document.getElementById('feedback-name').value = '';
+            document.getElementById('feedback-email').value = '';
+            document.getElementById('feedback-text').value = '';
+            
+            // Hide success message after 5 seconds
+            setTimeout(() => {
+                document.getElementById('feedback-success').style.display = 'none';
+            }, 5000);
         }
     </script>
 </body>
