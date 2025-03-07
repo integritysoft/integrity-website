@@ -68,5 +68,14 @@ python -m SimpleHTTPServer
 ## Project Structure
 
 - `index.html` - Main website page
-- `downloads/` - Contains downloadable software packages
-- `vercel.json` - Configuration file for Vercel deployment 
+- `public/downloads/` - Contains downloadable software packages
+- `vercel.json` - Configuration file for Vercel deployment
+
+## Important Notes for Deployment
+
+The downloadable files must be placed in the `public/downloads/` directory for Vercel to serve them correctly. This is because Vercel serves static assets from the `public` directory.
+
+If you're getting 404 errors when attempting to download files, make sure:
+1. All files exist in the `public/downloads/` directory
+2. The paths in the HTML file start with `/downloads/` (with a leading slash)
+3. The Vercel configuration correctly routes `/downloads/` requests 
