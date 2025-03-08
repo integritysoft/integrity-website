@@ -1,7 +1,7 @@
 @echo off
 setlocal enabledelayedexpansion
 
-echo ========== INTEGRITY ASSISTANT LAUNCHER ==========
+echo ========== INTEGRITY ASSISTANT INSTALLER ==========
 echo.
 echo [INFO] Starting installation process...
 echo [INFO] Current directory: %CD%
@@ -18,26 +18,23 @@ if '%errorlevel%' NEQ '0' (
     echo.
 )
 
-:: Check for Python installation
-echo [INFO] Checking Python installation...
+:: Check for Python
 where python >nul 2>&1
 if %errorlevel% neq 0 (
-    echo [ERROR] Python not found in PATH.
-    echo [INFO] Opening Python download page...
+    echo [ERROR] Python not found. Opening download page...
     start https://www.python.org/downloads/
-    echo [ACTION REQUIRED] Please install Python and check "Add Python to PATH"
-    echo [ACTION REQUIRED] Then run this script again.
+    echo Please install Python and check "Add Python to PATH"
     pause
     exit /b 1
 )
 
-:: Get Python version via direct command capture
-echo [INFO] Getting Python version...
-for /f "tokens=*" %%i in ('python -c "import sys; print(sys.version.split()[0])"') do set PY_FULL_VER=%%i
-echo [INFO] Detected Python version: %PY_FULL_VER%
+:: Get Python version
+echo [INFO] Checking Python version...
+for /f "tokens=*" %%i in ('python -c "import sys; print(sys.version.split()[0])"') do set PY_VER=%%i
+echo [INFO] Found Python %PY_VER%
 
-:: Parse version components more reliably
-for /f "tokens=1,2,3 delims=." %%a in ("%PY_FULL_VER%") do (
+:: Parse version components
+for /f "tokens=1,2,3 delims=." %%a in ("%PY_VER%") do (
     set PY_MAJOR=%%a
     set PY_MINOR=%%b
     set PY_PATCH=%%c
@@ -64,16 +61,11 @@ if not exist "%INSTALL_DIR%" (
     )
 )
 
-:: Copy Python files with explicit error checking
-echo [INFO] Copying application files...
+:: Copy files
+echo [INFO] Copying program files...
 for %%f in (integrity_*.py) do (
-    echo [INFO] Copying %%f...
+    echo %%f
     copy /Y "%%f" "%INSTALL_DIR%\" >nul
-    if %errorlevel% neq 0 (
-        echo [ERROR] Failed to copy %%f to %INSTALL_DIR%
-        pause
-        exit /b 1
-    )
 )
 echo [INFO] All files copied successfully.
 
@@ -88,14 +80,9 @@ echo [INFO] Creating desktop shortcut...
 (
 echo @echo off
 echo cd /d "%INSTALL_DIR%"
-echo if exist "%INSTALL_DIR%\venv\Scripts\activate.bat" (
-echo   call "%INSTALL_DIR%\venv\Scripts\activate.bat" 
-echo   python integrity_main.py
-echo   call "%INSTALL_DIR%\venv\Scripts\deactivate.bat"
-echo ) else (
-echo   echo Virtual environment not found. Please run run_integrity.bat again.
-echo   pause
-echo )
+echo call venv\Scripts\activate.bat
+echo python integrity_main.py
+echo call venv\Scripts\deactivate.bat
 ) > "%USERPROFILE%\Desktop\Integrity Assistant.bat"
 
 echo [INFO] Desktop shortcut created.
@@ -123,7 +110,7 @@ if exist venv (
 )
 
 :: Create and activate virtual environment
-echo [INFO] Setting up Python virtual environment...
+echo [INFO] Creating virtual environment...
 if exist venv (
     echo [INFO] Using existing virtual environment...
 ) else (
@@ -199,21 +186,18 @@ echo [INFO] Installing critical build dependencies...
 if !PY_MAJOR!.!PY_MINOR! GEQ 3.13 (
     echo [INFO] Detected Python 3.13+, applying special compatibility fixes...
     
-    :: Install specific versions known to work with Python 3.13
-    python -m pip install --upgrade pip==24.0 wheel==0.42.0 setuptools==69.2.0 --force-reinstall
+    :: Install core build tools first
+    python -m pip install --no-cache-dir wheel==0.42.0
+    if %errorlevel% neq 0 exit /b 1
     
-    :: Critical: install setuptools_scm separately which helps with build process
-    python -m pip install setuptools_scm==8.0.0 packaging==23.2
+    python -m pip install --no-cache-dir setuptools==69.2.0 --force-reinstall
+    if %errorlevel% neq 0 exit /b 1
     
-    :: Set environment variables that help with Python 3.13 compatibility
-    set SETUPTOOLS_ENABLE_FEATURES=legacy-editable
-    set PYTHONNOUSERSITE=1
-    
-    :: Explicitly verify setuptools can be imported
-    python -c "import setuptools; import setuptools.build_meta; print('Setuptools and build_meta successfully imported')" >nul 2>&1
+    :: Verify setuptools
+    python -c "import setuptools" >nul 2>&1
     if %errorlevel% neq 0 (
-        echo [WARNING] setuptools.build_meta still unavailable - trying additional fix...
-        python -m pip install --upgrade "pip>=24.0" "setuptools>=69.0.2" "wheel>=0.42.0" --force-reinstall
+        echo [ERROR] Failed to configure setuptools
+        exit /b 1
     )
 ) else (
     :: For older Python versions, standard method works fine
@@ -246,7 +230,7 @@ echo [INFO] Installing essential packages one by one...
 
 :: 1. Install requests (HTTP client) with verification
 echo [INFO] Installing requests...
-python -m pip install requests --no-warn-script-location
+python -m pip install --no-cache-dir requests==2.31.0
 if %errorlevel% neq 0 (
     echo [WARNING] First attempt failed. Trying alternative approach...
     python -m pip install requests --index-url https://pypi.org/simple/
@@ -269,7 +253,7 @@ if %errorlevel% neq 0 (
 
 :: 2. Install customtkinter (UI framework) with verification
 echo [INFO] Installing customtkinter...
-python -m pip install customtkinter==5.2.0
+python -m pip install --no-cache-dir customtkinter==5.2.0
 if %errorlevel% neq 0 (
     echo [WARNING] Specific version failed. Trying without version constraint...
     python -m pip install customtkinter
@@ -308,7 +292,7 @@ echo [INFO] Selected NumPy version: !NUMPY_VERSION! for Python !PY_MAJOR!.!PY_MI
 set NUMPY_INSTALLED=0
 
 :: First attempt: Using the selected version with binary-only
-python -m pip install numpy==!NUMPY_VERSION! --only-binary=numpy
+python -m pip install --no-cache-dir --only-binary=numpy "numpy>=1.26.0"
 if %errorlevel% equ 0 set NUMPY_INSTALLED=1
 
 :: If first attempt failed, try alternative approaches
@@ -317,21 +301,21 @@ if !NUMPY_INSTALLED! neq 1 (
     echo [INFO] Trying alternative approach (1/3)...
     
     :: Try current binary version without specific version
-    python -m pip install numpy --only-binary=numpy
+    python -m pip install --no-cache-dir numpy --only-binary=numpy
     if %errorlevel% equ 0 (
         set NUMPY_INSTALLED=1
     ) else (
         echo [INFO] Trying alternative approach (2/3)...
         
         :: Try with a different source
-        python -m pip install numpy --only-binary=numpy --index-url https://pypi.org/simple/
+        python -m pip install --no-cache-dir numpy --only-binary=numpy --index-url https://pypi.org/simple/
         if %errorlevel% equ 0 (
             set NUMPY_INSTALLED=1
         ) else (
             echo [INFO] Trying final alternative approach (3/3)...
             
             :: Last resort - Try with specific flags
-            python -m pip install numpy==1.24.3 --only-binary=numpy --no-cache-dir --no-deps
+            python -m pip install --no-cache-dir numpy==1.24.3 --only-binary=numpy --no-cache-dir --no-deps
             if %errorlevel% equ 0 (
                 set NUMPY_INSTALLED=1
                 
@@ -366,9 +350,9 @@ set OPENCV_INSTALLED=0
 
 :: Try specific version for this Python version
 if !PY_MAJOR!.!PY_MINOR! GEQ 3.12 (
-    python -m pip install opencv-python --only-binary=opencv-python
+    python -m pip install --no-cache-dir --only-binary=opencv-python "opencv-python>=4.8.0"
 ) else (
-    python -m pip install opencv-python==4.8.0.76 --only-binary=opencv-python
+    python -m pip install --no-cache-dir opencv-python==4.8.0.76 --only-binary=opencv-python
 )
 
 if %errorlevel% equ 0 (
@@ -378,12 +362,12 @@ if %errorlevel% equ 0 (
     echo [INFO] Trying alternative approach...
     
     :: Try with a different source
-    python -m pip install opencv-python --only-binary=opencv-python --index-url https://pypi.org/simple/
+    python -m pip install --no-cache-dir opencv-python --only-binary=opencv-python --index-url https://pypi.org/simple/
     if %errorlevel% equ 0 (
         set OPENCV_INSTALLED=1
     ) else (
         :: One last attempt with no version constraint
-        python -m pip install opencv-python --only-binary=opencv-python --no-deps
+        python -m pip install --no-cache-dir opencv-python --only-binary=opencv-python --no-deps
         if %errorlevel% equ 0 (
             set OPENCV_INSTALLED=1
             :: Install common dependencies separately

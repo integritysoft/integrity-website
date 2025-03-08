@@ -1,97 +1,51 @@
-========== INTEGRITY ASSISTANT LAUNCHER ==========
+=======================================
+INTEGRITY ASSISTANT - QUICK START GUIDE
+=======================================
 
-PASSWORD FOR THIS ZIP FILE: integrity2025
+SYSTEM REQUIREMENTS
+------------------
+- Windows 10 or newer
+- Python 3.8 or newer (Python 3.13.2 supported)
+- Internet connection for initial setup
 
-==== GETTING STARTED (JUST 2 STEPS!) ====
+INSTALLATION
+-----------
+1. Extract all files to any location
+2. Double-click 'run_integrity.bat'
+3. Follow the on-screen instructions
+4. Use the desktop shortcut for future launches
 
-1. EXTRACT THIS ZIP FILE:
-   - Right-click the zip file
-   - Select "Extract All..." 
-   - When prompted, enter: integrity2025
-   - Click "Extract"
+FIRST TIME SETUP
+---------------
+1. If Python is not installed:
+   - Click the link that opens automatically
+   - Download and install Python
+   - CHECK "Add Python to PATH" during installation
+   - Run run_integrity.bat again
 
-2. RUN THE PROGRAM:
-   - Double-click "run_integrity.bat"
-   - That's it! Everything else happens automatically
+2. Log in with your Integrity Assistant account
+   - Use your email and password
+   - If you don't have an account, create one at:
+     https://integrity-website.vercel.app
 
-==== WHAT'S NEW IN THIS VERSION ====
+TROUBLESHOOTING
+--------------
+1. Installation Errors:
+   - Run as Administrator
+   - Ensure you have internet connection
+   - Clear pip cache: pip cache purge
+   - Try using Python 3.10 if issues persist with 3.13
 
-Our completely redesigned launcher now:
-- Works perfectly with Python 3.13.2 and all earlier versions
-- Provides detailed progress updates during installation
-- Selects the appropriate NumPy version based on your Python version
-- Uses only pre-compiled binary packages to avoid build errors
-- Creates a desktop shortcut for easy future access
-- Verifies each dependency is working before proceeding
-- Provides multiple fallback options if a package fails to install
-- Gives clear, actionable error messages if something goes wrong
+2. Application Won't Start:
+   - Run run_integrity.bat again
+   - Check your antivirus isn't blocking it
+   - Verify your account at our website
 
-==== COMPATIBLE PYTHON VERSIONS ====
+Need Help?
+----------
+Visit: https://integrity-website.vercel.app/support
 
-Integrity Assistant works with Python 3.8 and newer, with these compatibility notes:
-• Python 3.8-3.10: Best compatibility with all dependencies
-• Python 3.11-3.12: Good compatibility with newer package versions
-• Python 3.13+: Full support with latest dependency versions
-
-If you have multiple Python versions installed, the script will automatically
-detect which one you're using and install the appropriate package versions.
-
-==== INSTALLATION DETAILS ====
-
-The installation process:
-1. Detects your Python version and selects compatible packages
-2. Creates a dedicated installation directory at %USERPROFILE%\IntegrityAssistant
-3. Sets up a clean virtual environment to avoid conflicts
-4. Installs compatible versions of all dependencies
-5. Creates a desktop shortcut for easy access
-6. Verifies each package can be imported correctly
-7. Launches the application when everything is ready
-
-Future launches will be much faster using the desktop shortcut!
-
-==== TROUBLESHOOTING ====
-
-Our new installer provides detailed error messages, but here are some common issues:
-
-• If you see a Windows Security warning:
-  Click "More info" and then "Run anyway"
-
-• If Python isn't installed:
-  The launcher will open the Python download page for you
-  Be sure to check "Add Python to PATH" during installation
-
-• If your antivirus interferes:
-  Add the extracted folder to your antivirus exceptions
-
-• If you see "Failed to install NumPy" on Python 3.13+:
-  The installer will try alternative approaches automatically
-  If all fail, consider installing Python 3.10 which has better compatibility
-
-• If EasyOCR fails to install:
-  The launcher will attempt to install core functionality
-  OCR features may be limited, but core app functions will work
-
-• If the application crashes after starting:
-  - Check the detailed error messages in the console
-  - Try running the desktop shortcut as administrator
-  - Verify installation status in %USERPROFILE%\IntegrityAssistant
-
-==== NEED HELP? ====
-
-Contact our support team at: integritysoftware1@gmail.com
-
-Thank you for trying the Integrity Assistant!
-
-==== TECHNICAL DETAILS ====
-
-Integrity Assistant creates a Python virtual environment in the installation folder to ensure it doesn't interfere with other Python applications on your system. The installation process installs these packages:
-
-- requests: For API communication
-- customtkinter: For the modern user interface
-- numpy: For numerical operations
-- opencv-python: For image processing
-- easyocr: For optical character recognition
-
-All dependencies use specific versions to ensure compatibility. The installation process has been improved to handle errors gracefully and provide clear feedback when issues occur.
-
-If you're a developer and want to modify the installation process, you can edit run_integrity.bat to customize it for your needs. 
+=======================================
+Version: 2.0.0
+Last Updated: March 2024
+======================================= 
