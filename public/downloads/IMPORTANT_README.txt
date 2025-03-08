@@ -1,143 +1,70 @@
-========== INTEGRITY ASSISTANT LAUNCHER ==========
+=======================================
+INTEGRITY ASSISTANT - QUICK START GUIDE
+=======================================
 
-PASSWORD FOR THIS ZIP FILE: integrity2025
+ZIP CONTENTS
+-----------
+- install.bat           : Installation and launcher script
+- integrity_main.py     : Main application file
+- integrity_ui.py       : User interface components
+- integrity_core.py     : Core functionality
+- integrity_api.py      : API integrations
+- config/              : Configuration directory
+- IMPORTANT_README.txt  : This file
 
-==== GETTING STARTED (JUST 2 STEPS!) ====
+SYSTEM REQUIREMENTS
+------------------
+- Windows 10 or newer
+- Python 3.8 or newer (Python 3.13.2 supported)
+- 4GB RAM minimum
+- 500MB free disk space
+- Internet connection for initial setup
 
-1. EXTRACT THIS ZIP FILE:
-   - Right-click the zip file
-   - Select "Extract All..." 
-   - When prompted, enter: integrity2025
-   - Click "Extract"
+INSTALLATION INSTRUCTIONS
+------------------------
+1. Extract all files to a location of your choice
+2. Double-click 'install.bat'
+3. Follow the on-screen instructions
+4. A desktop shortcut will be created automatically
 
-2. RUN THE PROGRAM:
-   - Double-click "run_integrity.bat"
-   - That's it! Everything else happens automatically
+The installer will:
+- Detect your Python installation
+- Create a virtual environment
+- Install all required dependencies
+- Set up the configuration directory
+- Create a desktop shortcut
 
-==== WHAT'S NEW IN THIS VERSION ====
+FIRST TIME SETUP
+---------------
+1. The first run may take several minutes
+2. All dependencies will be installed automatically
+3. If prompted about Python, install it from python.org
+4. Make sure to check "Add Python to PATH" during Python installation
 
-Our completely redesigned launcher now:
-- Works perfectly with Python 3.13.2 and all earlier versions
-- Provides detailed progress updates during installation
-- Selects the appropriate NumPy version based on your Python version
-- Uses only pre-compiled binary packages to avoid build errors
-- Creates a desktop shortcut for easy future access
-- Verifies each dependency is working before proceeding
-- Provides multiple fallback options if a package fails to install
-- Gives clear, actionable error messages if something goes wrong
+TROUBLESHOOTING
+--------------
+If you encounter any issues:
 
-==== COMPATIBLE PYTHON VERSIONS ====
+1. Python Not Found:
+   - Install Python from https://python.org/downloads
+   - Check "Add Python to PATH" during installation
+   - Run the installer again
 
-Integrity Assistant works with Python 3.8 and newer, with these compatibility notes:
-• Python 3.8-3.10: Best compatibility with all dependencies
-• Python 3.11-3.12: Good compatibility with newer package versions
-• Python 3.13+: Full support with latest dependency versions
+2. Installation Errors:
+   - Run as Administrator
+   - Ensure you have internet connection
+   - Clear your pip cache: pip cache purge
+   - Try using Python 3.10 if issues persist with 3.13
 
-If you have multiple Python versions installed, the script will automatically
-detect which one you're using and install the appropriate package versions.
+3. Application Won't Start:
+   - Use the install.bat to reinstall
+   - Check your antivirus isn't blocking the application
+   - Ensure all files are in the same directory
 
-==== INSTALLATION DETAILS ====
+For additional support, contact:
+[Your Support Contact Information]
 
-The installation process:
-1. Detects your Python version and selects compatible packages
-2. Creates a dedicated installation directory at %USERPROFILE%\IntegrityAssistant
-3. Sets up a clean virtual environment to avoid conflicts
-4. Installs compatible versions of all dependencies
-5. Creates a desktop shortcut for easy access
-6. Verifies each package can be imported correctly
-7. Launches the application when everything is ready
-
-Future launches will be much faster using the desktop shortcut!
-
-==== TROUBLESHOOTING ====
-
-Our new installer provides detailed error messages, but here are some common issues:
-
-• If you see a Windows Security warning:
-  Click "More info" and then "Run anyway"
-
-• If Python isn't installed:
-  The launcher will open the Python download page for you
-  Be sure to check "Add Python to PATH" during installation
-
-• If your antivirus interferes:
-  Add the extracted folder to your antivirus exceptions
-
-• If you see "Failed to install NumPy" on Python 3.13+:
-  The installer will try alternative approaches automatically
-  If all fail, consider installing Python 3.10 which has better compatibility
-
-• If EasyOCR fails to install:
-  The launcher will attempt to install core functionality
-  OCR features may be limited, but core app functions will work
-
-• If the application crashes after starting:
-  - Check the detailed error messages in the console
-  - Try running the desktop shortcut as administrator
-  - Verify installation status in %USERPROFILE%\IntegrityAssistant
-
-==== NEED HELP? ====
-
-Contact our support team at: integritysoftware1@gmail.com
-
-Thank you for trying the Integrity Assistant!
-
-==== TECHNICAL DETAILS ====
-
-The improved installation process now:
-
-1. Creates a dedicated installation directory at %USERPROFILE%\IntegrityAssistant
-2. Sets up a virtual environment within that directory
-3. Detects your Python version and installs appropriate package versions:
-   - requests: For API communication
-   - customtkinter: For the modern user interface  
-   - numpy: Version selected based on Python version compatibility
-   - opencv-python: Version selected based on Python version
-   - easyocr: With fallback installation methods if needed
-
-4. Creates two helper scripts:
-   - run.bat: Starts the application using the virtual environment
-   - setup.bat: Full installation script with enhanced error handling
-
-5. Creates a desktop shortcut for easy future access
-
-This architecture ensures maximum compatibility across different Python versions
-and provides a clean, isolated environment for the application to run in.
-
-==== CLEANUP SCRIPT ====
-
-The cleanup script (`cleanup_repository.ps1`) is a PowerShell script I created to help you organize your repository. It doesn't automatically delete files (for safety), but rather:
-
-1. Creates a proper directory structure
-2. Checks if essential files exist
-3. Creates a package template for your application
-4. Lists files that can be safely removed
-5. Provides instructions for creating the final package
-
-The script hasn't run automatically - you need to execute it manually. Here's how:
-
-1. Open PowerShell in your repository directory
-2. Run the script with:
-   ```
-   .\cleanup_repository.ps1
-   ```
-
-When you run it, you'll see colored output showing:
-- Which essential files are present/missing
-- A new `package-template` folder with the proper structure
-- A list of files that can be safely removed
-- Step-by-step instructions for creating your final package
-
-If you want the script to actually delete unnecessary files, you'll need to edit it and uncomment these lines near the end:
-
-```powershell
-# Uncomment these lines when you're ready to actually delete files
-# foreach ($pattern in $removableFiles) {
-#     Remove-Item -Path $pattern -Force -Recurse -ErrorAction SilentlyContinue
-# }
-# if (Test-Path "downloads") { 
-#     Remove-Item -Path "downloads" -Force -Recurse -ErrorAction SilentlyContinue
-# }
-```
-
-Would you like me to modify the script to automatically delete the unnecessary files, or would you prefer to run it first to see what it reports?
+=======================================
+Last Updated: March 2024
+Version: 1.0.0
+=======================================

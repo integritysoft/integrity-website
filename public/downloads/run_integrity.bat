@@ -217,7 +217,7 @@ if !PY_MAJOR!.!PY_MINOR! GEQ 3.13 (
         exit /b 1
     )
     
-    :: Install setuptools with specific version
+    :: Install setuptools with specific version known to work with 3.13
     python -m pip install --no-cache-dir setuptools==69.2.0 --force-reinstall
     if %errorlevel% neq 0 (
         echo [ERROR] Failed to install setuptools.
@@ -226,14 +226,8 @@ if !PY_MAJOR!.!PY_MINOR! GEQ 3.13 (
         exit /b 1
     )
     
-    :: Set environment variables that help with Python 3.13 compatibility
-    set SETUPTOOLS_ENABLE_FEATURES=legacy-editable
-    set PYTHONNOUSERSITE=1
-    set PIP_NO_BUILD_ISOLATION=0
-    set PIP_NO_DEPENDENCIES=0
-    
     :: Verify setuptools installation
-    python -c "import setuptools; print(f'Setuptools {setuptools.__version__} installed successfully')" >nul 2>&1
+    python -c "import setuptools; print(f'Setuptools {setuptools.__version__} installed successfully')"
     if %errorlevel% neq 0 (
         echo [ERROR] Failed to verify setuptools installation.
         call venv\Scripts\deactivate.bat
@@ -241,7 +235,6 @@ if !PY_MAJOR!.!PY_MINOR! GEQ 3.13 (
         exit /b 1
     )
 ) else (
-    :: For older Python versions, standard method works fine
     python -m pip install --upgrade pip setuptools wheel
 )
 
@@ -252,14 +245,10 @@ echo [INFO] Installing packages one by one...
 echo [INFO] Installing requests...
 python -m pip install --no-cache-dir requests==2.31.0
 if %errorlevel% neq 0 (
-    echo [WARNING] Failed to install specific version of requests, trying latest...
-    python -m pip install --no-cache-dir requests
-    if %errorlevel% neq 0 (
-        echo [ERROR] Failed to install requests.
-        call venv\Scripts\deactivate.bat
-        pause
-        exit /b 1
-    )
+    echo [ERROR] Failed to install requests.
+    call venv\Scripts\deactivate.bat
+    pause
+    exit /b 1
 )
 
 :: Verify requests
@@ -275,14 +264,10 @@ if %errorlevel% neq 0 (
 echo [INFO] Installing customtkinter...
 python -m pip install --no-cache-dir customtkinter==5.2.0
 if %errorlevel% neq 0 (
-    echo [WARNING] Failed to install specific version of customtkinter, trying latest...
-    python -m pip install --no-cache-dir customtkinter
-    if %errorlevel% neq 0 (
-        echo [ERROR] Failed to install customtkinter.
-        call venv\Scripts\deactivate.bat
-        pause
-        exit /b 1
-    )
+    echo [ERROR] Failed to install customtkinter.
+    call venv\Scripts\deactivate.bat
+    pause
+    exit /b 1
 )
 
 :: Verify customtkinter
@@ -297,20 +282,17 @@ if %errorlevel% neq 0 (
 :: 3. Install NumPy (binary only)
 echo [INFO] Installing NumPy...
 if !PY_MAJOR!.!PY_MINOR! GEQ 3.13 (
-    python -m pip install --no-cache-dir --only-binary=numpy numpy==1.26.4
+    :: For Python 3.13+, use latest compatible version
+    python -m pip install --no-cache-dir --only-binary=numpy "numpy>=1.26.0"
 ) else (
-    python -m pip install --no-cache-dir --only-binary=numpy numpy==1.24.3
+    python -m pip install --no-cache-dir --only-binary=numpy "numpy>=1.24.3"
 )
 
 if %errorlevel% neq 0 (
-    echo [WARNING] Failed to install specific version of NumPy, trying latest binary...
-    python -m pip install --no-cache-dir --only-binary=numpy numpy
-    if %errorlevel% neq 0 (
-        echo [ERROR] Failed to install NumPy.
-        call venv\Scripts\deactivate.bat
-        pause
-        exit /b 1
-    )
+    echo [ERROR] Failed to install NumPy.
+    call venv\Scripts\deactivate.bat
+    pause
+    exit /b 1
 )
 
 :: Verify NumPy
@@ -324,16 +306,12 @@ if %errorlevel% neq 0 (
 
 :: 4. Install OpenCV (binary only)
 echo [INFO] Installing OpenCV...
-python -m pip install --no-cache-dir --only-binary=opencv-python opencv-python==4.8.0.76
+python -m pip install --no-cache-dir --only-binary=opencv-python "opencv-python>=4.8.0"
 if %errorlevel% neq 0 (
-    echo [WARNING] Failed to install specific version of OpenCV, trying latest binary...
-    python -m pip install --no-cache-dir --only-binary=opencv-python opencv-python
-    if %errorlevel% neq 0 (
-        echo [ERROR] Failed to install OpenCV.
-        call venv\Scripts\deactivate.bat
-        pause
-        exit /b 1
-    )
+    echo [ERROR] Failed to install OpenCV.
+    call venv\Scripts\deactivate.bat
+    pause
+    exit /b 1
 )
 
 :: Verify OpenCV
@@ -347,7 +325,7 @@ if %errorlevel% neq 0 (
 
 :: 5. Install EasyOCR (optional)
 echo [INFO] Installing EasyOCR (optional)...
-python -m pip install --no-cache-dir easyocr==1.7.0
+python -m pip install --no-cache-dir "easyocr>=1.7.0"
 if %errorlevel% neq 0 (
     echo [WARNING] Failed to install EasyOCR. The application will run with limited OCR functionality.
     echo [INFO] This is not a critical error, continuing...
