@@ -6,6 +6,10 @@ echo.
 echo [INFO] Starting installation process...
 echo [INFO] Current directory: %CD%
 
+:: Set installation directory
+set INSTALL_DIR=%USERPROFILE%\IntegrityAssistant
+echo [INFO] Installation directory: %INSTALL_DIR%
+
 :: Ensure we have admin rights for better reliability
 >nul 2>&1 "%SYSTEMROOT%\system32\cacls.exe" "%SYSTEMROOT%\system32\config\system"
 if '%errorlevel%' NEQ '0' (
@@ -14,37 +18,39 @@ if '%errorlevel%' NEQ '0' (
     echo.
 )
 
-:: Set installation directory
-set INSTALL_DIR=%USERPROFILE%\IntegrityAssistant
-echo [INFO] Installation directory: %INSTALL_DIR%
-
-:: Check for Python and get version
+:: Check for Python installation
 echo [INFO] Checking Python installation...
-python --version >nul 2>&1
+where python >nul 2>&1
 if %errorlevel% neq 0 (
     echo [ERROR] Python not found in PATH.
     echo [INFO] Opening Python download page...
     start https://www.python.org/downloads/
-    echo Please install Python 3.8-3.10 (recommended) and check "Add Python to PATH"
-    echo Then run this script again.
+    echo [ACTION REQUIRED] Please install Python and check "Add Python to PATH"
+    echo [ACTION REQUIRED] Then run this script again.
     pause
     exit /b 1
 )
 
-:: Get Python version information with explicit redirection
+:: Get Python version via direct command capture
 echo [INFO] Getting Python version...
-python --version > "%TEMP%\pyversion.txt" 2>&1
-set /p PYTHON_VERSION=<"%TEMP%\pyversion.txt"
-del "%TEMP%\pyversion.txt"
-echo [INFO] %PYTHON_VERSION%
+for /f "tokens=*" %%i in ('python -c "import sys; print(sys.version.split()[0])"') do set PY_FULL_VER=%%i
+echo [INFO] Detected Python version: %PY_FULL_VER%
 
-:: Extract Python version numbers more carefully
-for /f "tokens=2" %%i in ("%PYTHON_VERSION%") do set PY_VER=%%i
-for /f "tokens=1,2 delims=." %%a in ("%PY_VER%") do (
+:: Parse version components more reliably
+for /f "tokens=1,2,3 delims=." %%a in ("%PY_FULL_VER%") do (
     set PY_MAJOR=%%a
     set PY_MINOR=%%b
+    set PY_PATCH=%%c
 )
-echo [INFO] Detected Python !PY_MAJOR!.!PY_MINOR!
+echo [INFO] Python version breakdown: !PY_MAJOR!.!PY_MINOR!.!PY_PATCH!
+
+:: Check for baseline Python version compatibility
+if !PY_MAJOR! LSS 3 (
+    echo [ERROR] Python 3.x is required, but Python !PY_MAJOR!.!PY_MINOR! was found.
+    echo [INFO] Please install Python 3.8 or newer.
+    pause
+    exit /b 1
+)
 
 :: Create installation directory if it doesn't exist
 if not exist "%INSTALL_DIR%" (
@@ -122,10 +128,16 @@ if exist venv (
     echo [INFO] Using existing virtual environment...
 ) else (
     echo [INFO] Creating new virtual environment...
+    
+    :: Set environment variables to avoid compilation issues
+    set PYTHONNOUSERSITE=1
+    set PIP_NO_BUILD_ISOLATION=0
+    set PIP_USE_PEP517=1
+    
     python -m venv venv
     if %errorlevel% neq 0 (
         echo [WARNING] Failed to create venv with standard method. Trying alternative...
-        python -m pip install virtualenv
+        python -m pip install --user virtualenv
         python -m virtualenv venv
         if %errorlevel% neq 0 (
             echo [ERROR] All attempts to create virtual environment failed.
@@ -145,160 +157,201 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
-:: Verify activation
+:: Define helper functions via temporary file
+echo [INFO] Setting up verification helpers...
+(
+echo import sys, subprocess, importlib
+echo 
+echo def check_imports(packages):
+echo     """Check if packages can be imported, return list of failed packages"""
+echo     failed = []
+echo     for pkg in packages:
+echo         try:
+echo             importlib.import_module(pkg)
+echo             print(f"  - {pkg}: OK")
+echo         except ImportError:
+echo             failed.append(pkg)
+echo             print(f"  - {pkg}: FAILED")
+echo     return failed
+echo 
+echo def verify_package(package_name, import_name=None):
+echo     """Verify a package is properly installed"""
+echo     if import_name is None:
+echo         import_name = package_name
+echo     try:
+echo         module = importlib.import_module(import_name)
+echo         version = getattr(module, '__version__', 'unknown')
+echo         print(f"{package_name} {version}: INSTALLED SUCCESSFULLY")
+echo         return True
+echo     except ImportError:
+echo         print(f"{package_name}: INSTALLATION VERIFICATION FAILED")
+echo         return False
+) > "%TEMP%\verify_helpers.py"
+
+:: Verify activation using the helper script
 echo [INFO] Verifying virtual environment activation...
-python -c "import sys; print('Virtual environment path:', sys.prefix)" > "%TEMP%\venv_check.txt"
-if %errorlevel% neq 0 (
-    echo [ERROR] Virtual environment seems to be activated but Python is not working.
-    pause
-    exit /b 1
-)
-set /p VENV_PATH=<"%TEMP%\venv_check.txt"
-del "%TEMP%\venv_check.txt"
-echo [INFO] %VENV_PATH%
+python -c "import sys; print('Virtual environment active at:', sys.prefix)"
 
-:: Check if the path contains the expected virtual environment path
-echo !VENV_PATH! | findstr /C:"%INSTALL_DIR%\venv" >nul
-if %errorlevel% neq 0 (
-    echo [ERROR] Virtual environment does not seem to be properly activated.
-    pause
-    exit /b 1
-)
+:: CRITICAL SECTION: Properly set up pip and setuptools first
+echo [INFO] Installing critical build dependencies...
 
-:: Critical step: update setuptools completely before anything else
-echo [INFO] Installing latest setuptools, pip and wheel...
-python -m pip install --upgrade pip wheel setuptools
-if %errorlevel% neq 0 (
-    echo [WARNING] Failed to upgrade pip/setuptools. Trying direct method...
-    python -m pip install pip==23.1.2 setuptools==67.8.0 wheel==0.40.0 --force-reinstall
+:: For Python 3.13+ we need to be very careful with setuptools
+if !PY_MAJOR!.!PY_MINOR! GEQ 3.13 (
+    echo [INFO] Detected Python 3.13+, applying special compatibility fixes...
+    
+    :: Install specific versions known to work with Python 3.13
+    python -m pip install --upgrade pip==24.0 wheel==0.42.0 setuptools==69.2.0 --force-reinstall
+    
+    :: Critical: install setuptools_scm separately which helps with build process
+    python -m pip install setuptools_scm==8.0.0 packaging==23.2
+    
+    :: Set environment variables that help with Python 3.13 compatibility
+    set SETUPTOOLS_ENABLE_FEATURES=legacy-editable
+    set PYTHONNOUSERSITE=1
+    
+    :: Explicitly verify setuptools can be imported
+    python -c "import setuptools; import setuptools.build_meta; print('Setuptools and build_meta successfully imported')" >nul 2>&1
     if %errorlevel% neq 0 (
-        echo [ERROR] Critical error: Failed to install basic tools.
-        echo [INFO] Please try with a different Python installation.
-        call venv\Scripts\deactivate.bat
-        pause
-        exit /b 1
+        echo [WARNING] setuptools.build_meta still unavailable - trying additional fix...
+        python -m pip install --upgrade "pip>=24.0" "setuptools>=69.0.2" "wheel>=0.42.0" --force-reinstall
     )
+) else (
+    :: For older Python versions, standard method works fine
+    python -m pip install --upgrade pip setuptools wheel
 )
 
-:: For Python 3.13+, ensure setuptools is properly configured
-if !PY_MAJOR!.!PY_MINOR! GEQ 3.12 (
-    echo [INFO] Python 3.12+ detected, ensuring setuptools compatibility...
-    python -m pip install "setuptools>=69.0.2" --force-reinstall
-    if %errorlevel% neq 0 (
-        echo [WARNING] Setuptools upgrade failed, installation might fail later.
-    )
-)
-
-:: Install pyproject dependencies that might be needed to build packages
-echo [INFO] Installing build dependencies...
-python -m pip install "build>=1.0.3" "wheel>=0.42.0" "setuptools_scm>=8.0.0" "packaging>=23.0"
+:: Verify working status of pip
+python -m pip --version
 if %errorlevel% neq 0 (
-    echo [WARNING] Failed to install build dependencies. Will attempt to continue...
-)
-
-:: Install packages one by one with repeated verification
-echo [INFO] Installing dependencies (this may take a while)...
-
-:: Install requests with verification
-echo [INFO] Installing requests...
-python -m pip install requests
-if %errorlevel% neq 0 (
-    echo [ERROR] Failed to install requests.
-    echo [INFO] Trying alternative source...
-    python -m pip install requests --index-url https://pypi.org/simple
-    if %errorlevel% neq 0 (
-        echo [ERROR] Failed to install requests. Cannot continue.
-        call venv\Scripts\deactivate.bat
-        pause
-        exit /b 1
-    )
-)
-echo [INFO] Verifying requests installation...
-python -c "import requests; print('Requests', requests.__version__)" > "%TEMP%\pkg_check.txt"
-if %errorlevel% neq 0 (
-    echo [ERROR] Requests installed but cannot be imported.
+    echo [ERROR] pip is not functioning properly in the virtual environment.
+    echo [INFO] This critical tool is required. Please try with a different Python version.
     call venv\Scripts\deactivate.bat
     pause
     exit /b 1
 )
-set /p PKG_VERSION=<"%TEMP%\pkg_check.txt"
-del "%TEMP%\pkg_check.txt"
-echo [SUCCESS] %PKG_VERSION% installed successfully.
 
-:: Install customtkinter with verification
+:: Add additional build dependencies
+echo [INFO] Installing extended build dependencies...
+python -m pip install "build>=1.0.3" "cython>=3.0.0" --no-warn-script-location
+
+:: Set environment variables to prevent build isolation issues
+set PIP_NO_BUILD_ISOLATION=0
+set PIP_NO_DEPENDENCIES=0
+set PIP_DISABLE_PIP_VERSION_CHECK=1
+
+:: ==== SPECIALIZED PACKAGE INSTALLATION ====
+:: Each package installed and verified individually
+
+echo [INFO] Installing essential packages one by one...
+
+:: 1. Install requests (HTTP client) with verification
+echo [INFO] Installing requests...
+python -m pip install requests --no-warn-script-location
+if %errorlevel% neq 0 (
+    echo [WARNING] First attempt failed. Trying alternative approach...
+    python -m pip install requests --index-url https://pypi.org/simple/
+    if %errorlevel% neq 0 (
+        echo [ERROR] Failed to install requests. This is a critical dependency.
+        call venv\Scripts\deactivate.bat
+        pause
+        exit /b 1
+    )
+)
+
+:: Verify requests installation using helper
+python -c "import requests; print(f'Requests {requests.__version__} installed successfully')"
+if %errorlevel% neq 0 (
+    echo [ERROR] requests package installed but cannot be imported.
+    call venv\Scripts\deactivate.bat
+    pause
+    exit /b 1
+)
+
+:: 2. Install customtkinter (UI framework) with verification
 echo [INFO] Installing customtkinter...
 python -m pip install customtkinter==5.2.0
 if %errorlevel% neq 0 (
-    echo [ERROR] Failed to install customtkinter.
-    echo [INFO] Trying without version constraint...
+    echo [WARNING] Specific version failed. Trying without version constraint...
     python -m pip install customtkinter
     if %errorlevel% neq 0 (
-        echo [ERROR] Failed to install customtkinter. Cannot continue.
+        echo [ERROR] Failed to install customtkinter. This is a required UI package.
         call venv\Scripts\deactivate.bat
         pause
         exit /b 1
     )
 )
-echo [INFO] Verifying customtkinter installation...
-python -c "import customtkinter; print('CustomTkinter', customtkinter.__version__)" > "%TEMP%\pkg_check.txt"
+
+:: Verify customtkinter installation
+python -c "import customtkinter; print(f'CustomTkinter {customtkinter.__version__} installed successfully')"
 if %errorlevel% neq 0 (
-    echo [ERROR] CustomTkinter installed but cannot be imported.
+    echo [ERROR] customtkinter package installed but cannot be imported.
     call venv\Scripts\deactivate.bat
     pause
     exit /b 1
 )
-set /p PKG_VERSION=<"%TEMP%\pkg_check.txt"
-del "%TEMP%\pkg_check.txt"
-echo [SUCCESS] %PKG_VERSION% installed successfully.
 
-:: Install NumPy with version-specific handling and verification
-echo [INFO] Installing NumPy...
-set NUMPY_INSTALLED=0
+:: 3. Install NumPy with special handling for Python version
+echo [INFO] Installing NumPy (mathematical library)...
 
-:: Try specific version for this Python version
+:: Set NumPy version based on Python version
 if !PY_MAJOR!.!PY_MINOR! GEQ 3.13 (
-    echo [INFO] Using NumPy 1.26.4 for Python 3.13+...
-    python -m pip install numpy==1.26.4 --only-binary=numpy
+    set NUMPY_VERSION=1.26.4
 ) else if !PY_MAJOR!.!PY_MINOR! GEQ 3.12 (
-    echo [INFO] Using NumPy 1.26.0 for Python 3.12...
-    python -m pip install numpy==1.26.0 --only-binary=numpy
-) else if !PY_MAJOR!.!PY_MINOR! GEQ 3.11 (
-    echo [INFO] Using NumPy 1.25.2 for Python 3.11...
-    python -m pip install numpy==1.25.2 --only-binary=numpy
+    set NUMPY_VERSION=1.26.0
 ) else (
-    echo [INFO] Using NumPy 1.24.3 for Python 3.8-3.10...
-    python -m pip install numpy==1.24.3 --only-binary=numpy
+    set NUMPY_VERSION=1.24.3
 )
 
-if %errorlevel% equ 0 (
-    set NUMPY_INSTALLED=1
-) else (
-    echo [WARNING] First NumPy installation attempt failed.
+echo [INFO] Selected NumPy version: !NUMPY_VERSION! for Python !PY_MAJOR!.!PY_MINOR!
+
+:: Try multiple approaches to install NumPy
+set NUMPY_INSTALLED=0
+
+:: First attempt: Using the selected version with binary-only
+python -m pip install numpy==!NUMPY_VERSION! --only-binary=numpy
+if %errorlevel% equ 0 set NUMPY_INSTALLED=1
+
+:: If first attempt failed, try alternative approaches
+if !NUMPY_INSTALLED! neq 1 (
+    echo [WARNING] First NumPy installation attempt failed (error code: %errorlevel%)
     echo [INFO] Trying alternative approach (1/3)...
     
-    :: Try with a different source
-    python -m pip install numpy --only-binary=numpy --index-url https://pypi.org/simple
+    :: Try current binary version without specific version
+    python -m pip install numpy --only-binary=numpy
     if %errorlevel% equ 0 (
         set NUMPY_INSTALLED=1
     ) else (
         echo [INFO] Trying alternative approach (2/3)...
         
-        :: Try with any version
-        python -m pip install numpy --only-binary=numpy
+        :: Try with a different source
+        python -m pip install numpy --only-binary=numpy --index-url https://pypi.org/simple/
         if %errorlevel% equ 0 (
             set NUMPY_INSTALLED=1
         ) else (
             echo [INFO] Trying final alternative approach (3/3)...
             
-            :: Try a known-good version with specific flags
-            python -m pip install numpy==1.24.3 --only-binary=numpy --no-cache-dir --use-pep517
+            :: Last resort - Try with specific flags
+            python -m pip install numpy==1.24.3 --only-binary=numpy --no-cache-dir --no-deps
             if %errorlevel% equ 0 (
                 set NUMPY_INSTALLED=1
+                
+                :: Install dependencies separately if needed
+                python -m pip install pybind11
             )
         )
     )
 )
 
+:: Verify NumPy installation
+if !NUMPY_INSTALLED! equ 1 (
+    python -c "import numpy; print(f'NumPy {numpy.__version__} installed successfully')"
+    if %errorlevel% neq 0 (
+        echo [ERROR] NumPy package installed but cannot be imported correctly.
+        set NUMPY_INSTALLED=0
+    )
+)
+
+:: Exit if NumPy installation failed
 if !NUMPY_INSTALLED! neq 1 (
     echo [ERROR] All attempts to install NumPy failed.
     echo [INFO] Please try with Python 3.10 which has better compatibility.
@@ -307,22 +360,11 @@ if !NUMPY_INSTALLED! neq 1 (
     exit /b 1
 )
 
-echo [INFO] Verifying NumPy installation...
-python -c "import numpy; print('NumPy', numpy.__version__)" > "%TEMP%\pkg_check.txt"
-if %errorlevel% neq 0 (
-    echo [ERROR] NumPy installed but cannot be imported.
-    call venv\Scripts\deactivate.bat
-    pause
-    exit /b 1
-)
-set /p PKG_VERSION=<"%TEMP%\pkg_check.txt"
-del "%TEMP%\pkg_check.txt"
-echo [SUCCESS] %PKG_VERSION% installed successfully.
-
-:: Install OpenCV with verification
+:: 4. Install OpenCV (computer vision library)
 echo [INFO] Installing OpenCV...
 set OPENCV_INSTALLED=0
 
+:: Try specific version for this Python version
 if !PY_MAJOR!.!PY_MINOR! GEQ 3.12 (
     python -m pip install opencv-python --only-binary=opencv-python
 ) else (
@@ -335,33 +377,40 @@ if %errorlevel% equ 0 (
     echo [WARNING] First OpenCV installation attempt failed.
     echo [INFO] Trying alternative approach...
     
-    python -m pip install opencv-python --only-binary=opencv-python --index-url https://pypi.org/simple
+    :: Try with a different source
+    python -m pip install opencv-python --only-binary=opencv-python --index-url https://pypi.org/simple/
     if %errorlevel% equ 0 (
         set OPENCV_INSTALLED=1
+    ) else (
+        :: One last attempt with no version constraint
+        python -m pip install opencv-python --only-binary=opencv-python --no-deps
+        if %errorlevel% equ 0 (
+            set OPENCV_INSTALLED=1
+            :: Install common dependencies separately
+            python -m pip install numpy
+        )
     )
 )
 
+:: Verify OpenCV installation
+if !OPENCV_INSTALLED! equ 1 (
+    python -c "import cv2; print(f'OpenCV {cv2.__version__} installed successfully')"
+    if %errorlevel% neq 0 (
+        echo [ERROR] OpenCV package installed but cannot be imported correctly.
+        set OPENCV_INSTALLED=0
+    )
+)
+
+:: Exit if OpenCV installation failed
 if !OPENCV_INSTALLED! neq 1 (
-    echo [ERROR] Failed to install OpenCV.
+    echo [ERROR] All attempts to install OpenCV failed.
     echo [INFO] This is required. Please try with a different Python version.
     call venv\Scripts\deactivate.bat
     pause
     exit /b 1
 )
 
-echo [INFO] Verifying OpenCV installation...
-python -c "import cv2; print('OpenCV', cv2.__version__)" > "%TEMP%\pkg_check.txt"
-if %errorlevel% neq 0 (
-    echo [ERROR] OpenCV installed but cannot be imported.
-    call venv\Scripts\deactivate.bat
-    pause
-    exit /b 1
-)
-set /p PKG_VERSION=<"%TEMP%\pkg_check.txt"
-del "%TEMP%\pkg_check.txt"
-echo [SUCCESS] %PKG_VERSION% installed successfully.
-
-:: Install EasyOCR with fallback strategies
+:: 5. Install EasyOCR (optional but useful)
 echo [INFO] Installing EasyOCR (this may take several minutes)...
 set EASYOCR_INSTALLED=0
 
@@ -372,12 +421,13 @@ if %errorlevel% equ 0 (
     echo [WARNING] Standard EasyOCR installation failed.
     echo [INFO] Trying alternative installation approach...
     
+    :: Try to install core components separately
     python -m pip install easyocr --no-deps
     python -m pip install torch==2.0.1 torchvision==0.15.2 --index-url https://download.pytorch.org/whl/cpu
     python -m pip install Pillow scipy Jinja2 scikit-image
     
     :: Check if core components are installed, even if the full package failed
-    python -c "import torch, torchvision" >nul 2>&1
+    python -c "import torch" >nul 2>&1
     if %errorlevel% equ 0 (
         echo [INFO] Core OCR dependencies installed successfully.
         set EASYOCR_INSTALLED=1
@@ -387,40 +437,36 @@ if %errorlevel% equ 0 (
 if !EASYOCR_INSTALLED! neq 1 (
     echo [WARNING] Could not install EasyOCR or its core dependencies.
     echo [INFO] The application will run with limited OCR functionality.
-) else (
-    echo [INFO] Verifying EasyOCR core installation...
-    python -c "import torch; print('PyTorch', torch.__version__)" > "%TEMP%\pkg_check.txt"
-    if %errorlevel% equ 0 (
-        set /p PKG_VERSION=<"%TEMP%\pkg_check.txt"
-        del "%TEMP%\pkg_check.txt"
-        echo [SUCCESS] %PKG_VERSION% installed successfully.
-    )
 )
 
-:: Create verification file to indicate successful installation
-echo Installation completed on %date% %time% > "%INSTALL_DIR%\installation_completed.txt"
-echo Python version: %PYTHON_VERSION% >> "%INSTALL_DIR%\installation_completed.txt"
-
-:: Do a final import test of all critical dependencies
+:: Perform final verification of all critical packages
 echo [INFO] Performing final verification of all critical packages...
 (
-echo import sys
-echo import requests
-echo import customtkinter
-echo import numpy
-echo import cv2
-echo print("All critical packages imported successfully!")
-) > "%TEMP%\verify_imports.py"
+echo from verify_helpers import check_imports
+echo print("Verifying critical packages...")
+echo failed = check_imports(['requests', 'customtkinter', 'numpy', 'cv2'])
+echo if failed:
+echo     print(f"VERIFICATION FAILED for: {', '.join(failed)}")
+echo     exit(1)
+echo else:
+echo     print("All critical imports verified successfully!")
+) > "%TEMP%\final_verify.py"
 
-python "%TEMP%\verify_imports.py"
+python "%TEMP%\final_verify.py"
 if %errorlevel% neq 0 (
     echo [ERROR] Final verification failed. Some packages may not be installed correctly.
-    del "%TEMP%\verify_imports.py"
-    call venv\Scripts\deactivate.bat
+    echo [INFO] The application may not work properly.
     pause
     exit /b 1
 )
-del "%TEMP%\verify_imports.py"
+
+:: Clean up temporary files
+del "%TEMP%\verify_helpers.py" 2>nul
+del "%TEMP%\final_verify.py" 2>nul
+
+:: Create installation record
+echo Installation completed on %date% %time% > "%INSTALL_DIR%\installation_completed.txt"
+echo Python version: !PY_MAJOR!.!PY_MINOR!.!PY_PATCH! >> "%INSTALL_DIR%\installation_completed.txt"
 
 echo.
 echo [SUCCESS] All dependencies installed and verified successfully!
@@ -442,4 +488,5 @@ echo [INFO] Integrity Assistant has closed.
 echo [INFO] Next time, you can use the desktop shortcut.
 echo.
 pause
+endlocal 
 endlocal 
