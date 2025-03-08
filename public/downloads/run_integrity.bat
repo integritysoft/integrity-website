@@ -201,9 +201,22 @@ if !PY_MAJOR!.!PY_MINOR! GEQ 3.13 (
     
     :: Install specific versions known to work with Python 3.13
     python -m pip install --upgrade pip==24.0 wheel==0.42.0 setuptools==69.2.0 --force-reinstall
+    if %errorlevel% neq 0 (
+        echo [ERROR] Failed to install critical build dependencies.
+        echo [INFO] Please try running as administrator.
+        call venv\Scripts\deactivate.bat
+        pause
+        exit /b 1
+    )
     
     :: Critical: install setuptools_scm separately which helps with build process
     python -m pip install setuptools_scm==8.0.0 packaging==23.2
+    if %errorlevel% neq 0 (
+        echo [ERROR] Failed to install setuptools_scm.
+        call venv\Scripts\deactivate.bat
+        pause
+        exit /b 1
+    )
     
     :: Set environment variables that help with Python 3.13 compatibility
     set SETUPTOOLS_ENABLE_FEATURES=legacy-editable
@@ -214,10 +227,26 @@ if !PY_MAJOR!.!PY_MINOR! GEQ 3.13 (
     if %errorlevel% neq 0 (
         echo [WARNING] setuptools.build_meta still unavailable - trying additional fix...
         python -m pip install --upgrade "pip>=24.0" "setuptools>=69.0.2" "wheel>=0.42.0" --force-reinstall
+        
+        :: Verify again after the fix
+        python -c "import setuptools; import setuptools.build_meta" >nul 2>&1
+        if %errorlevel% neq 0 (
+            echo [ERROR] Failed to configure setuptools properly.
+            echo [INFO] This is required for package installation.
+            call venv\Scripts\deactivate.bat
+            pause
+            exit /b 1
+        )
     )
 ) else (
     :: For older Python versions, standard method works fine
     python -m pip install --upgrade pip setuptools wheel
+    if %errorlevel% neq 0 (
+        echo [ERROR] Failed to upgrade pip and setuptools.
+        call venv\Scripts\deactivate.bat
+        pause
+        exit /b 1
+    )
 )
 
 :: Verify working status of pip
@@ -229,10 +258,6 @@ if %errorlevel% neq 0 (
     pause
     exit /b 1
 )
-
-:: Add additional build dependencies
-echo [INFO] Installing extended build dependencies...
-python -m pip install "build>=1.0.3" "cython>=3.0.0" --no-warn-script-location
 
 :: Set environment variables to prevent build isolation issues
 set PIP_NO_BUILD_ISOLATION=0
@@ -246,10 +271,10 @@ echo [INFO] Installing essential packages one by one...
 
 :: 1. Install requests (HTTP client) with verification
 echo [INFO] Installing requests...
-python -m pip install requests --no-warn-script-location
+python -m pip install --no-cache-dir requests --no-warn-script-location
 if %errorlevel% neq 0 (
     echo [WARNING] First attempt failed. Trying alternative approach...
-    python -m pip install requests --index-url https://pypi.org/simple/
+    python -m pip install --no-cache-dir requests --index-url https://pypi.org/simple/
     if %errorlevel% neq 0 (
         echo [ERROR] Failed to install requests. This is a critical dependency.
         call venv\Scripts\deactivate.bat
@@ -258,7 +283,7 @@ if %errorlevel% neq 0 (
     )
 )
 
-:: Verify requests installation using helper
+:: Verify requests installation
 python -c "import requests; print(f'Requests {requests.__version__} installed successfully')"
 if %errorlevel% neq 0 (
     echo [ERROR] requests package installed but cannot be imported.
@@ -269,10 +294,10 @@ if %errorlevel% neq 0 (
 
 :: 2. Install customtkinter (UI framework) with verification
 echo [INFO] Installing customtkinter...
-python -m pip install customtkinter==5.2.0
+python -m pip install --no-cache-dir customtkinter==5.2.0
 if %errorlevel% neq 0 (
     echo [WARNING] Specific version failed. Trying without version constraint...
-    python -m pip install customtkinter
+    python -m pip install --no-cache-dir customtkinter
     if %errorlevel% neq 0 (
         echo [ERROR] Failed to install customtkinter. This is a required UI package.
         call venv\Scripts\deactivate.bat
@@ -307,36 +332,35 @@ echo [INFO] Selected NumPy version: !NUMPY_VERSION! for Python !PY_MAJOR!.!PY_MI
 :: Try multiple approaches to install NumPy
 set NUMPY_INSTALLED=0
 
-:: First attempt: Using the selected version with binary-only
-python -m pip install numpy==!NUMPY_VERSION! --only-binary=numpy
+:: First attempt: Using the selected version with binary-only and no cache
+python -m pip install --no-cache-dir numpy==!NUMPY_VERSION! --only-binary=numpy
 if %errorlevel% equ 0 set NUMPY_INSTALLED=1
 
 :: If first attempt failed, try alternative approaches
 if !NUMPY_INSTALLED! neq 1 (
-    echo [WARNING] First NumPy installation attempt failed (error code: %errorlevel%)
-    echo [INFO] Trying alternative approach (1/3)...
+    echo [WARNING] First NumPy installation attempt failed. Trying alternative approach (1/3)...
     
     :: Try current binary version without specific version
-    python -m pip install numpy --only-binary=numpy
+    python -m pip install --no-cache-dir numpy --only-binary=numpy
     if %errorlevel% equ 0 (
         set NUMPY_INSTALLED=1
     ) else (
         echo [INFO] Trying alternative approach (2/3)...
         
         :: Try with a different source
-        python -m pip install numpy --only-binary=numpy --index-url https://pypi.org/simple/
+        python -m pip install --no-cache-dir numpy --only-binary=numpy --index-url https://pypi.org/simple/
         if %errorlevel% equ 0 (
             set NUMPY_INSTALLED=1
         ) else (
             echo [INFO] Trying final alternative approach (3/3)...
             
             :: Last resort - Try with specific flags
-            python -m pip install numpy==1.24.3 --only-binary=numpy --no-cache-dir --no-deps
+            python -m pip install --no-cache-dir numpy==1.24.3 --only-binary=numpy --no-deps
             if %errorlevel% equ 0 (
                 set NUMPY_INSTALLED=1
                 
                 :: Install dependencies separately if needed
-                python -m pip install pybind11
+                python -m pip install --no-cache-dir pybind11
             )
         )
     )
@@ -366,9 +390,9 @@ set OPENCV_INSTALLED=0
 
 :: Try specific version for this Python version
 if !PY_MAJOR!.!PY_MINOR! GEQ 3.12 (
-    python -m pip install opencv-python --only-binary=opencv-python
+    python -m pip install --no-cache-dir opencv-python --only-binary=opencv-python
 ) else (
-    python -m pip install opencv-python==4.8.0.76 --only-binary=opencv-python
+    python -m pip install --no-cache-dir opencv-python==4.8.0.76 --only-binary=opencv-python
 )
 
 if %errorlevel% equ 0 (
@@ -378,16 +402,16 @@ if %errorlevel% equ 0 (
     echo [INFO] Trying alternative approach...
     
     :: Try with a different source
-    python -m pip install opencv-python --only-binary=opencv-python --index-url https://pypi.org/simple/
+    python -m pip install --no-cache-dir opencv-python --only-binary=opencv-python --index-url https://pypi.org/simple/
     if %errorlevel% equ 0 (
         set OPENCV_INSTALLED=1
     ) else (
         :: One last attempt with no version constraint
-        python -m pip install opencv-python --only-binary=opencv-python --no-deps
+        python -m pip install --no-cache-dir opencv-python --only-binary=opencv-python --no-deps
         if %errorlevel% equ 0 (
             set OPENCV_INSTALLED=1
             :: Install common dependencies separately
-            python -m pip install numpy
+            python -m pip install --no-cache-dir numpy
         )
     )
 )
@@ -414,7 +438,7 @@ if !OPENCV_INSTALLED! neq 1 (
 echo [INFO] Installing EasyOCR (this may take several minutes)...
 set EASYOCR_INSTALLED=0
 
-python -m pip install easyocr==1.7.0
+python -m pip install --no-cache-dir easyocr==1.7.0
 if %errorlevel% equ 0 (
     set EASYOCR_INSTALLED=1
 ) else (
@@ -422,11 +446,11 @@ if %errorlevel% equ 0 (
     echo [INFO] Trying alternative installation approach...
     
     :: Try to install core components separately
-    python -m pip install easyocr --no-deps
-    python -m pip install torch==2.0.1 torchvision==0.15.2 --index-url https://download.pytorch.org/whl/cpu
-    python -m pip install Pillow scipy Jinja2 scikit-image
+    python -m pip install --no-cache-dir easyocr --no-deps
+    python -m pip install --no-cache-dir torch==2.0.1 torchvision==0.15.2 --index-url https://download.pytorch.org/whl/cpu
+    python -m pip install --no-cache-dir Pillow scipy Jinja2 scikit-image
     
-    :: Check if core components are installed, even if the full package failed
+    :: Check if core components are installed
     python -c "import torch" >nul 2>&1
     if %errorlevel% equ 0 (
         echo [INFO] Core OCR dependencies installed successfully.
@@ -441,21 +465,11 @@ if !EASYOCR_INSTALLED! neq 1 (
 
 :: Perform final verification of all critical packages
 echo [INFO] Performing final verification of all critical packages...
-(
-echo from verify_helpers import check_imports
-echo print("Verifying critical packages...")
-echo failed = check_imports(['requests', 'customtkinter', 'numpy', 'cv2'])
-echo if failed:
-echo     print(f"VERIFICATION FAILED for: {', '.join(failed)}")
-echo     exit(1)
-echo else:
-echo     print("All critical imports verified successfully!")
-) > "%TEMP%\final_verify.py"
-
-python "%TEMP%\final_verify.py"
+python -c "import requests, customtkinter, numpy, cv2; print('All critical packages verified successfully!')"
 if %errorlevel% neq 0 (
     echo [ERROR] Final verification failed. Some packages may not be installed correctly.
-    echo [INFO] The application may not work properly.
+    echo [INFO] Please try reinstalling with Python 3.10 for better compatibility.
+    call venv\Scripts\deactivate.bat
     pause
     exit /b 1
 )
