@@ -1,0 +1,26 @@
+==== INTEGRITY ASSISTANT PACKAGE STRUCTURE ====
+
+Make sure your final package zip contains the following structure:
+
+integrity-assistant/
+├── IMPORTANT_README.txt           # Quick start guide
+├── run_integrity.bat              # Launcher script that installs deps & runs app
+├── src/                           # All Python source code goes here
+│   ├── integrity_main.py          # Main Python script
+│   ├── [other .py files]          # Any other Python modules
+│   └── [resources]                # Images, configs, etc.
+└── [other files]                  # Any other necessary files
+
+Steps to create the final package:
+
+1. Create the above folder structure
+2. Copy all necessary files into the right locations
+3. Use 7-Zip to create a password-protected zip:
+   - Right-click on the "integrity-assistant" folder
+   - Select 7-Zip > "Add to archive..."
+   - Set archive format to "zip"
+   - Enable encryption with password: integrity2025
+   - Set encryption method to AES-256
+   - Name the file: integrity-assistant-windows-protected.zip
+4. Move this zip file to the public/downloads/ directory
+5. Test by downloading from your website 

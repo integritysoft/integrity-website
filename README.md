@@ -75,6 +75,20 @@ python -m SimpleHTTPServer
 
 The downloadable files must be placed in the `public/downloads/` directory for Vercel to serve them correctly. This is because Vercel serves static assets from the `public` directory.
 
+### Dealing with Antivirus False Positives
+
+To prevent Windows Defender and other antivirus programs from flagging our executable as potentially harmful:
+
+1. We distribute the software in password-protected zip files
+2. The password for all files is: `integrity2025`
+3. Create these files using 7-Zip with AES-256 encryption
+4. Include the `IMPORTANT_README.txt` file in each package
+
+To prepare the protected zip files:
+1. Run the `create_protected_zips.ps1` script for guidance
+2. Follow the instructions to prepare and encrypt your distribution files
+3. Place the resulting protected zip files in `public/downloads/`
+
 If you're getting 404 errors when attempting to download files, make sure:
 1. All files exist in the `public/downloads/` directory
 2. The paths in the HTML file start with `/downloads/` (with a leading slash)

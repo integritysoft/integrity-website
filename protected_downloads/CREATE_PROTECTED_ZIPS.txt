@@ -1,0 +1,29 @@
+==== INSTRUCTIONS FOR CREATING PASSWORD-PROTECTED ZIP FILES ====
+
+1. INSTALL 7-ZIP (if not already installed)
+   - Download from: https://7-zip.org/
+   - Install following the installation wizard
+
+2. CREATE PASSWORD-PROTECTED ZIP FILES:
+   - Right-click on the folder containing the Integrity Assistant files
+   - Choose "7-Zip" > "Add to archive..."
+   - In the dialog that appears:
+     * Set "Archive format" to "zip"
+     * Click "Encryption" section
+     * Enter password: integrity2025
+     * Set "Encryption method" to AES-256
+     * Click "OK" to create the archive
+
+3. REPEAT FOR EACH PLATFORM:
+   - Create separate password-protected zip files for:
+     * Windows
+     * macOS
+     * Linux
+
+4. INCLUDE THE README:
+   - Make sure to include IMPORTANT_README.txt in each zip file
+   - This file contains instructions for users on how to extract and run the software
+
+5. PLACE IN PUBLIC/DOWNLOADS:
+   - Move the password-protected zip files to public/downloads/
+   - These will be the files linked from the website 
