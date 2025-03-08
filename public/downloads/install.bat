@@ -15,7 +15,7 @@ echo [INFO] Installation directory: %INSTALL_DIR%
 if '%errorlevel%' NEQ '0' (
     echo [WARNING] This script is not running with administrative privileges.
     echo [WARNING] Some operations might fail. Consider running as administrator.
-    echo.
+echo.
 )
 
 :: Check for Python installation
@@ -329,5 +329,5 @@ echo.
 echo [INFO] Integrity Assistant has closed.
 echo [INFO] Next time, you can use the desktop shortcut.
 echo.
-pause
+pause 
 endlocal 

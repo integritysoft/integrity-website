@@ -1,5 +1,14 @@
 Windows Package Structure:
 
+integrity-assistant-windows/
+├── run_integrity.bat       # Installation and launcher script
+├── IMPORTANT_README.txt    # Installation instructions
+├── integrity_main.py       # Main application
+├── integrity_ui.py         # User interface
+├── integrity_core.py       # Core functionality
+├── integrity_api.py        # API integration
+└── config/                 # Configuration directory (empty)
+
 integrity-assistant-windows.zip
 |-- install.bat
 |-- integrity_main.py

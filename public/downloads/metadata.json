@@ -1,6 +1,34 @@
 {
   "name": "Integrity Assistant",
-  "version": "0.1.2",
+  "version": "2.0.0",
+  "lastUpdated": "2024-03-08",
+  "pythonSupport": {
+    "minimum": "3.8.0",
+    "recommended": "3.10.0",
+    "tested": ["3.8.0", "3.10.0", "3.11.0", "3.12.0", "3.13.2"]
+  },
+  "dependencies": {
+    "requests": "2.31.0",
+    "customtkinter": "5.2.0",
+    "numpy": ">=1.26.0",
+    "opencv-python": ">=4.8.0"
+  },
+  "files": {
+    "run_integrity.bat": {
+      "size": "12KB",
+      "purpose": "Installation and launcher script"
+    },
+    "IMPORTANT_README.txt": {
+      "size": "2.1KB",
+      "purpose": "Installation instructions"
+    },
+    "integrity_main.py": {
+      "size": "5KB",
+      "purpose": "Main application file"
+    }
+  },
+  "serverEndpoint": "https://integrity-server.up.railway.app",
+  "supportUrl": "https://www.integritysoftware.download/support",
   "release_type": "Public Alpha",
   "build_date": "2023-03-06",
   "description": "AI-powered digital assistant that understands your screen activity and helps navigate your digital world",
