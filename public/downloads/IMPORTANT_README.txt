@@ -14,13 +14,25 @@ PASSWORD FOR THIS ZIP FILE: integrity2025
    - Double-click "run_integrity.bat"
    - That's it! Everything else happens automatically
 
-The first time you run the application, it will:
-- Check if Python is installed (and help you install it if needed)
-- Set up a clean environment
-- Install all necessary components
-- Launch Integrity Assistant
+The installation process:
+- Detects your Python version and adapts package installations accordingly
+- Creates a dedicated installation directory in your user folder
+- Sets up a clean virtual environment to avoid conflicts
+- Installs compatible versions of all dependencies
+- Creates a desktop shortcut for easy access
+- Launches the application when done
 
-Future launches will be much faster!
+Future launches will be much faster using the desktop shortcut!
+
+==== COMPATIBLE PYTHON VERSIONS ====
+
+Integrity Assistant works with Python 3.8 and higher, with these notes:
+• Python 3.8-3.10: Best compatibility with all dependencies
+• Python 3.11-3.12: Good compatibility, some adapters used
+• Python 3.13+: Newest version with experimental support
+
+If you encounter issues with Python 3.13+, we recommend installing Python 3.10
+which has the best compatibility with all required packages.
 
 ==== TROUBLESHOOTING ====
 
@@ -34,20 +46,15 @@ Future launches will be much faster!
 • If your antivirus interferes:
   Add the extracted folder to your antivirus exceptions
 
-• If you see "ModuleNotFoundError" messages:
-  - The launcher will now detect and fix this automatically
-  - Each dependency is installed one by one with error checking
-  - If you still have issues, try running the launcher with administrator privileges
-
-• If numpy or other packages fail to install:
-  - The launcher now uses pre-compiled wheels to avoid build errors
-  - Make sure you have an active internet connection
-  - If problems persist, try from a different network (some corporate networks block pip)
+• If you see dependency installation errors:
+  - The installer now provides detailed error messages
+  - For NumPy issues on Python 3.13+, try installing Python 3.10
+  - For EasyOCR issues, the installer will fallback to core functionality
 
 • If the application crashes after starting:
   - Check the error messages in the console window
-  - Try running the launcher again as administrator
-  - Make sure your Python version is 3.8 or higher (3.10 recommended)
+  - Try running the desktop shortcut as administrator
+  - Verify the installation by running setup.bat in the installation folder
 
 ==== NEED HELP? ====
 
@@ -57,17 +64,25 @@ Thank you for trying the Integrity Assistant!
 
 ==== TECHNICAL DETAILS ====
 
-Integrity Assistant creates a Python virtual environment in the installation folder to ensure it doesn't interfere with other Python applications on your system. The installation process installs these packages:
+The improved installation process now:
 
-- requests: For API communication
-- customtkinter: For the modern user interface
-- numpy: For numerical operations
-- opencv-python: For image processing
-- easyocr: For optical character recognition
+1. Creates a dedicated installation directory at %USERPROFILE%\IntegrityAssistant
+2. Sets up a virtual environment within that directory
+3. Detects your Python version and installs appropriate package versions:
+   - requests: For API communication
+   - customtkinter: For the modern user interface  
+   - numpy: Version selected based on Python version compatibility
+   - opencv-python: Version selected based on Python version
+   - easyocr: With fallback installation methods if needed
 
-All dependencies use specific versions to ensure compatibility. The installation process has been improved to handle errors gracefully and provide clear feedback when issues occur.
+4. Creates two helper scripts:
+   - run.bat: Starts the application using the virtual environment
+   - setup.bat: Full installation script with enhanced error handling
 
-If you're a developer and want to modify the installation process, you can edit run_integrity.bat to customize it for your needs.
+5. Creates a desktop shortcut for easy future access
+
+This architecture ensures maximum compatibility across different Python versions
+and provides a clean, isolated environment for the application to run in.
 
 ==== CLEANUP SCRIPT ====
 
