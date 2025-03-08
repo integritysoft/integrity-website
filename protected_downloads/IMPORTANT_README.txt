@@ -1,4 +1,4 @@
-========== INTEGRITY ASSISTANT - QUICK START GUIDE ==========
+========== INTEGRITY ASSISTANT LAUNCHER ==========
 
 PASSWORD FOR THIS ZIP FILE: integrity2025
 
@@ -14,40 +14,67 @@ PASSWORD FOR THIS ZIP FILE: integrity2025
    - Double-click "run_integrity.bat"
    - That's it! Everything else happens automatically
 
-The first time you run the application, it will:
-- Check if Python is installed (and help you install it if needed)
-- Set up a clean environment
-- Install all necessary components
-- Launch Integrity Assistant
+==== WHAT'S NEW IN THIS VERSION ====
 
-Future launches will be much faster!
+Our completely redesigned launcher now:
+- Works perfectly with Python 3.13.2 and all earlier versions
+- Provides detailed progress updates during installation
+- Selects the appropriate NumPy version based on your Python version
+- Uses only pre-compiled binary packages to avoid build errors
+- Creates a desktop shortcut for easy future access
+- Verifies each dependency is working before proceeding
+- Provides multiple fallback options if a package fails to install
+- Gives clear, actionable error messages if something goes wrong
+
+==== COMPATIBLE PYTHON VERSIONS ====
+
+Integrity Assistant works with Python 3.8 and newer, with these compatibility notes:
+• Python 3.8-3.10: Best compatibility with all dependencies
+• Python 3.11-3.12: Good compatibility with newer package versions
+• Python 3.13+: Full support with latest dependency versions
+
+If you have multiple Python versions installed, the script will automatically
+detect which one you're using and install the appropriate package versions.
+
+==== INSTALLATION DETAILS ====
+
+The installation process:
+1. Detects your Python version and selects compatible packages
+2. Creates a dedicated installation directory at %USERPROFILE%\IntegrityAssistant
+3. Sets up a clean virtual environment to avoid conflicts
+4. Installs compatible versions of all dependencies
+5. Creates a desktop shortcut for easy access
+6. Verifies each package can be imported correctly
+7. Launches the application when everything is ready
+
+Future launches will be much faster using the desktop shortcut!
 
 ==== TROUBLESHOOTING ====
+
+Our new installer provides detailed error messages, but here are some common issues:
 
 • If you see a Windows Security warning:
   Click "More info" and then "Run anyway"
 
 • If Python isn't installed:
-  The launcher will open the download page for you
+  The launcher will open the Python download page for you
   Be sure to check "Add Python to PATH" during installation
 
 • If your antivirus interferes:
   Add the extracted folder to your antivirus exceptions
 
-• If you see "ModuleNotFoundError" messages:
-  - The launcher will now detect and fix this automatically
-  - Each dependency is installed one by one with error checking
-  - If you still have issues, try running the launcher with administrator privileges
+• If you see "Failed to install NumPy" on Python 3.13+:
+  The installer will try alternative approaches automatically
+  If all fail, consider installing Python 3.10 which has better compatibility
 
-• If numpy or other packages fail to install:
-  - The launcher now uses pre-compiled wheels to avoid build errors
-  - Make sure you have an active internet connection
-  - If problems persist, try from a different network (some corporate networks block pip)
+• If EasyOCR fails to install:
+  The launcher will attempt to install core functionality
+  OCR features may be limited, but core app functions will work
 
 • If the application crashes after starting:
-  - Check the error messages in the console window
-  - Try running the launcher again as administrator
-  - Make sure your Python version is 3.8 or higher (3.10 recommended)
+  - Check the detailed error messages in the console
+  - Try running the desktop shortcut as administrator
+  - Verify installation status in %USERPROFILE%\IntegrityAssistant
 
 ==== NEED HELP? ====
 

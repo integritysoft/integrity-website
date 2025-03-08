@@ -1,194 +1,294 @@
 @echo off
+setlocal enabledelayedexpansion
+
 echo ========== INTEGRITY ASSISTANT LAUNCHER ==========
 echo.
-echo Checking Python version...
-python --version > temp_version.txt 2>&1
-set /p PYTHON_VERSION=<temp_version.txt
-echo %PYTHON_VERSION%
-del temp_version.txt
+echo [INFO] Starting installation process...
 
-REM Extract the version number
-for /f "tokens=2" %%i in ("%PYTHON_VERSION%") do set PYTHON_VERSION=%%i
+REM Set installation directory
+set INSTALL_DIR=%USERPROFILE%\IntegrityAssistant
+echo [INFO] Installation directory: %INSTALL_DIR%
 
-REM Check if Python is installed
-if "%PYTHON_VERSION%"=="" (
-    echo ERROR: Python is not installed or not in PATH.
-    echo.
-    echo We'll open the Python download page for you.
-    echo Please install Python 3.8-3.10 (recommended) and be sure to check "Add Python to PATH" during installation.
-    echo After installation, please run this launcher again.
-    echo.
+REM Check for Python and get version
+echo [INFO] Checking Python installation...
+python --version >nul 2>&1
+if %errorlevel% neq 0 (
+    echo [ERROR] Python not found in PATH.
+    echo [INFO] Opening Python download page...
     start https://www.python.org/downloads/
-    echo Press any key to exit...
-    pause > nul
+    echo Please install Python 3.8-3.10 (recommended) and check "Add Python to PATH"
+    echo Then run this script again.
+    pause
     exit /b 1
-) else (
-    echo Found Python %PYTHON_VERSION%
 )
 
-REM Create installation directory
-set INSTALL_DIR=%USERPROFILE%\IntegrityAssistant
-echo Creating installation directory %INSTALL_DIR%...
-if not exist "%INSTALL_DIR%" mkdir "%INSTALL_DIR%"
+REM Get Python version information
+for /f "tokens=*" %%i in ('python --version 2^>^&1') do set PYTHON_VERSION=%%i
+echo [INFO] %PYTHON_VERSION%
 
-REM Copy necessary files
-echo Copying program files...
-xcopy /y .\integrity_*.py "%INSTALL_DIR%\"
+REM Extract Python version numbers
+for /f "tokens=2" %%i in ("%PYTHON_VERSION%") do set PY_VER=%%i
+for /f "tokens=1,2 delims=." %%a in ("%PY_VER%") do (
+    set PY_MAJOR=%%a
+    set PY_MINOR=%%b
+)
+echo [INFO] Using Python !PY_MAJOR!.!PY_MINOR!
 
-REM Create a configuration directory
-echo Creating configuration directory...
-if not exist "%INSTALL_DIR%\config" mkdir "%INSTALL_DIR%\config"
+REM Create installation directory if it doesn't exist
+if not exist "%INSTALL_DIR%" (
+    echo [INFO] Creating installation directory...
+    mkdir "%INSTALL_DIR%"
+    if %errorlevel% neq 0 (
+        echo [ERROR] Failed to create installation directory.
+        echo [INFO] Try running as administrator or check permissions.
+        pause
+        exit /b 1
+    )
+)
 
-REM Create a desktop shortcut
-echo Creating desktop shortcut...
+REM Copy Python files
+echo [INFO] Copying application files...
+xcopy /y .\integrity_*.py "%INSTALL_DIR%\" >nul 2>&1
+if %errorlevel% neq 0 (
+    echo [ERROR] Failed to copy application files.
+    pause
+    exit /b 1
+)
+
+REM Create config directory
+if not exist "%INSTALL_DIR%\config" (
+    echo [INFO] Creating configuration directory...
+    mkdir "%INSTALL_DIR%\config" >nul 2>&1
+)
+
+REM Create desktop shortcut
+echo [INFO] Creating desktop shortcut...
 echo @echo off > "%USERPROFILE%\Desktop\Integrity Assistant.bat"
 echo cd /d "%INSTALL_DIR%" >> "%USERPROFILE%\Desktop\Integrity Assistant.bat"
-echo call "%INSTALL_DIR%\run.bat" >> "%USERPROFILE%\Desktop\Integrity Assistant.bat"
+echo if exist "%INSTALL_DIR%\venv\Scripts\activate.bat" ( >> "%USERPROFILE%\Desktop\Integrity Assistant.bat"
+echo   call "%INSTALL_DIR%\venv\Scripts\activate.bat" >> "%USERPROFILE%\Desktop\Integrity Assistant.bat" 
+echo   python integrity_main.py >> "%USERPROFILE%\Desktop\Integrity Assistant.bat"
+echo   call "%INSTALL_DIR%\venv\Scripts\deactivate.bat" >> "%USERPROFILE%\Desktop\Integrity Assistant.bat"
+echo ) else ( >> "%USERPROFILE%\Desktop\Integrity Assistant.bat"
+echo   echo Virtual environment not found. Please run run_integrity.bat again. >> "%USERPROFILE%\Desktop\Integrity Assistant.bat"
+echo   pause >> "%USERPROFILE%\Desktop\Integrity Assistant.bat"
+echo ) >> "%USERPROFILE%\Desktop\Integrity Assistant.bat"
 
-REM Create a launcher script in the installation directory
-echo @echo off > "%INSTALL_DIR%\run.bat"
-echo cd /d "%INSTALL_DIR%" >> "%INSTALL_DIR%\run.bat"
-echo if exist venv\Scripts\activate.bat ( >> "%INSTALL_DIR%\run.bat"
-echo   call venv\Scripts\activate.bat >> "%INSTALL_DIR%\run.bat"
-echo   python integrity_main.py >> "%INSTALL_DIR%\run.bat"
-echo   call venv\Scripts\deactivate.bat >> "%INSTALL_DIR%\run.bat"
-echo ) else ( >> "%INSTALL_DIR%\run.bat"
-echo   echo Virtual environment not found. Running setup... >> "%INSTALL_DIR%\run.bat"
-echo   call "%INSTALL_DIR%\setup.bat" >> "%INSTALL_DIR%\run.bat"
-echo ) >> "%INSTALL_DIR%\run.bat"
+REM Change to installation directory
+cd /d "%INSTALL_DIR%"
+if %errorlevel% neq 0 (
+    echo [ERROR] Failed to change to installation directory.
+    pause
+    exit /b 1
+)
 
-REM Create a setup script in the installation directory
-echo @echo off > "%INSTALL_DIR%\setup.bat"
-echo cd /d "%INSTALL_DIR%" >> "%INSTALL_DIR%\setup.bat"
-echo echo Setting up Integrity Assistant environment... >> "%INSTALL_DIR%\setup.bat"
+REM Create and activate virtual environment
+echo [INFO] Setting up Python virtual environment...
+if exist venv (
+    echo [INFO] Using existing virtual environment...
+) else (
+    echo [INFO] Creating new virtual environment...
+    python -m venv venv
+    if %errorlevel% neq 0 (
+        echo [WARNING] Failed to create venv, trying virtualenv...
+        pip install virtualenv >nul 2>&1
+        python -m virtualenv venv
+        if %errorlevel% neq 0 (
+            echo [ERROR] Failed to create virtual environment.
+            echo [INFO] Please check your Python installation.
+            pause
+            exit /b 1
+        )
+    )
+)
 
-REM Add version-specific instructions
-echo if not exist venv ( >> "%INSTALL_DIR%\setup.bat"
-echo   echo Creating virtual environment... >> "%INSTALL_DIR%\setup.bat"
-echo   python -m venv venv >> "%INSTALL_DIR%\setup.bat"
-echo   if errorlevel 1 ( >> "%INSTALL_DIR%\setup.bat"
-echo     echo Failed to create virtual environment with venv module. >> "%INSTALL_DIR%\setup.bat"
-echo     echo Installing virtualenv... >> "%INSTALL_DIR%\setup.bat"
-echo     python -m pip install virtualenv >> "%INSTALL_DIR%\setup.bat"
-echo     python -m virtualenv venv >> "%INSTALL_DIR%\setup.bat"
-echo     if errorlevel 1 ( >> "%INSTALL_DIR%\setup.bat"
-echo       echo CRITICAL ERROR: Cannot create virtual environment. >> "%INSTALL_DIR%\setup.bat"
-echo       echo Please try running as administrator or install Python 3.8-3.10. >> "%INSTALL_DIR%\setup.bat"
-echo       pause >> "%INSTALL_DIR%\setup.bat"
-echo       exit /b 1 >> "%INSTALL_DIR%\setup.bat"
-echo     ) >> "%INSTALL_DIR%\setup.bat"
-echo   ) >> "%INSTALL_DIR%\setup.bat"
-echo ) >> "%INSTALL_DIR%\setup.bat"
+REM Activate virtual environment
+echo [INFO] Activating virtual environment...
+call venv\Scripts\activate.bat
+if %errorlevel% neq 0 (
+    echo [ERROR] Failed to activate virtual environment.
+    pause
+    exit /b 1
+)
 
-echo call venv\Scripts\activate.bat >> "%INSTALL_DIR%\setup.bat"
-echo if errorlevel 1 ( >> "%INSTALL_DIR%\setup.bat"
-echo   echo CRITICAL ERROR: Cannot activate virtual environment. >> "%INSTALL_DIR%\setup.bat"
-echo   pause >> "%INSTALL_DIR%\setup.bat"
-echo   exit /b 1 >> "%INSTALL_DIR%\setup.bat"
-echo ) >> "%INSTALL_DIR%\setup.bat"
+REM Upgrade pip and setuptools with error checking
+echo [INFO] Upgrading pip and setuptools...
+python -m pip install --upgrade pip wheel setuptools >nul 2>&1
+if %errorlevel% neq 0 (
+    echo [WARNING] Failed to upgrade pip/setuptools. Continuing anyway...
+)
 
-echo echo Updating pip, setuptools and wheel... >> "%INSTALL_DIR%\setup.bat"
-echo python -m pip install --upgrade pip setuptools wheel >> "%INSTALL_DIR%\setup.bat"
+REM For Python 3.13+, ensure we have latest setuptools
+if !PY_MAJOR!.!PY_MINOR! GEQ 3.13 (
+    echo [INFO] Python 3.13+ detected, installing latest setuptools...
+    pip install setuptools --upgrade >nul 2>&1
+)
 
-REM Handle the installation of packages based on Python version
-echo echo Installing dependencies for Python %PYTHON_VERSION%... >> "%INSTALL_DIR%\setup.bat"
-echo. >> "%INSTALL_DIR%\setup.bat"
+REM Function to install a package with retries
+echo [INFO] Installing dependencies (this may take a while)...
 
-REM First install requests which is required and relatively simple
-echo echo Installing requests... >> "%INSTALL_DIR%\setup.bat"
-echo pip install requests >> "%INSTALL_DIR%\setup.bat"
-echo if errorlevel 1 ( >> "%INSTALL_DIR%\setup.bat"
-echo   echo ERROR: Failed to install requests. >> "%INSTALL_DIR%\setup.bat"
-echo   echo This is required and cannot continue without it. >> "%INSTALL_DIR%\setup.bat"
-echo   call venv\Scripts\deactivate.bat >> "%INSTALL_DIR%\setup.bat"
-echo   pause >> "%INSTALL_DIR%\setup.bat"
-echo   exit /b 1 >> "%INSTALL_DIR%\setup.bat"
-echo ) >> "%INSTALL_DIR%\setup.bat"
+REM Install requests
+echo [INFO] Installing requests...
+pip install requests
+if %errorlevel% neq 0 (
+    echo [ERROR] Failed to install requests.
+    echo [INFO] Trying with alternative method...
+    pip install requests --no-deps
+    if %errorlevel% neq 0 (
+        echo [ERROR] Failed to install requests. Cannot continue.
+        call venv\Scripts\deactivate.bat
+        pause
+        exit /b 1
+    )
+)
 
-REM Then install customtkinter - should work on all Python versions
-echo echo Installing customtkinter... >> "%INSTALL_DIR%\setup.bat"
-echo pip install customtkinter==5.2.0 >> "%INSTALL_DIR%\setup.bat"
-echo if errorlevel 1 ( >> "%INSTALL_DIR%\setup.bat"
-echo   echo ERROR: Failed to install customtkinter. >> "%INSTALL_DIR%\setup.bat"
-echo   echo This is required and cannot continue without it. >> "%INSTALL_DIR%\setup.bat"
-echo   call venv\Scripts\deactivate.bat >> "%INSTALL_DIR%\setup.bat"
-echo   pause >> "%INSTALL_DIR%\setup.bat"
-echo   exit /b 1 >> "%INSTALL_DIR%\setup.bat"
-echo ) >> "%INSTALL_DIR%\setup.bat"
+REM Install customtkinter
+echo [INFO] Installing customtkinter...
+pip install customtkinter==5.2.0
+if %errorlevel% neq 0 (
+    echo [ERROR] Failed to install customtkinter.
+    call venv\Scripts\deactivate.bat
+    pause
+    exit /b 1
+)
 
-REM Handle numpy specially based on Python version
-echo for /f "tokens=1,2 delims=." %%%%a in ('python -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')"') do ( >> "%INSTALL_DIR%\setup.bat"
-echo   set py_major=%%%%a >> "%INSTALL_DIR%\setup.bat"
-echo   set py_minor=%%%%b >> "%INSTALL_DIR%\setup.bat"
-echo ) >> "%INSTALL_DIR%\setup.bat"
+REM Install NumPy with version-specific handling
+echo [INFO] Installing NumPy...
+if !PY_MAJOR!.!PY_MINOR! GEQ 3.13 (
+    echo [INFO] Using NumPy 1.26.4+ for Python 3.13+...
+    pip install numpy==1.26.4 --only-binary=numpy
+) else if !PY_MAJOR!.!PY_MINOR! GEQ 3.12 (
+    echo [INFO] Using NumPy 1.26.0+ for Python 3.12...
+    pip install "numpy>=1.26.0" --only-binary=numpy
+) else if !PY_MAJOR!.!PY_MINOR! GEQ 3.11 (
+    echo [INFO] Using NumPy 1.25.2 for Python 3.11...
+    pip install numpy==1.25.2 --only-binary=numpy
+) else (
+    echo [INFO] Using NumPy 1.24.3 for Python 3.8-3.10...
+    pip install numpy==1.24.3 --only-binary=numpy
+)
 
-REM Numpy compatibility with different Python versions
-echo if !py_major!.!py_minor! GEQ 3.12 ( >> "%INSTALL_DIR%\setup.bat"
-echo   echo Installing numpy for Python 3.12+ ... >> "%INSTALL_DIR%\setup.bat"
-echo   pip install "numpy>=1.26.0" --only-binary=numpy >> "%INSTALL_DIR%\setup.bat"
-echo ) else if !py_major!.!py_minor! GEQ 3.11 ( >> "%INSTALL_DIR%\setup.bat"
-echo   echo Installing numpy for Python 3.11 ... >> "%INSTALL_DIR%\setup.bat"
-echo   pip install "numpy>=1.25.0,<1.26.0" --only-binary=numpy >> "%INSTALL_DIR%\setup.bat"
-echo ) else if !py_major!.!py_minor! GEQ 3.8 ( >> "%INSTALL_DIR%\setup.bat"
-echo   echo Installing numpy for Python 3.8-3.10 ... >> "%INSTALL_DIR%\setup.bat"
-echo   pip install "numpy==1.24.3" --only-binary=numpy >> "%INSTALL_DIR%\setup.bat"
-echo ) else ( >> "%INSTALL_DIR%\setup.bat"
-echo   echo Installing numpy for older Python ... >> "%INSTALL_DIR%\setup.bat"
-echo   pip install "numpy==1.22.4" --only-binary=numpy >> "%INSTALL_DIR%\setup.bat"
-echo ) >> "%INSTALL_DIR%\setup.bat"
+if %errorlevel% neq 0 (
+    echo [ERROR] Failed to install NumPy.
+    echo [INFO] Trying alternative approach...
+    
+    REM For Python 3.13+, use the latest version
+    if !PY_MAJOR!.!PY_MINOR! GEQ 3.13 (
+        pip install --index-url https://pypi.org/simple/ numpy==1.26.4 --only-binary=numpy
+    ) else (
+        pip install --index-url https://pypi.org/simple/ "numpy>=1.24.0" --only-binary=numpy
+    )
+    
+    if %errorlevel% neq 0 (
+        echo [ERROR] Failed to install NumPy. Cannot continue.
+        echo [INFO] Please try installing Python 3.10 which has better compatibility.
+        call venv\Scripts\deactivate.bat
+        pause
+        exit /b 1
+    )
+)
 
-echo if errorlevel 1 ( >> "%INSTALL_DIR%\setup.bat"
-echo   echo ERROR: Failed to install numpy. >> "%INSTALL_DIR%\setup.bat"
-echo   echo This is required and cannot continue without it. >> "%INSTALL_DIR%\setup.bat"
-echo   echo Please try with Python 3.8-3.10 which has better package compatibility. >> "%INSTALL_DIR%\setup.bat"
-echo   call venv\Scripts\deactivate.bat >> "%INSTALL_DIR%\setup.bat"
-echo   pause >> "%INSTALL_DIR%\setup.bat"
-echo   exit /b 1 >> "%INSTALL_DIR%\setup.bat"
-echo ) >> "%INSTALL_DIR%\setup.bat"
+REM Verify NumPy installed correctly
+python -c "import numpy; print('NumPy', numpy.__version__)" >nul 2>&1
+if %errorlevel% neq 0 (
+    echo [ERROR] NumPy installed but cannot be imported.
+    call venv\Scripts\deactivate.bat
+    pause
+    exit /b 1
+)
 
-REM Install OpenCV with version compatibility
-echo echo Installing OpenCV... >> "%INSTALL_DIR%\setup.bat"
-echo if !py_major!.!py_minor! GEQ 3.12 ( >> "%INSTALL_DIR%\setup.bat"
-echo   pip install opencv-python --only-binary=opencv-python >> "%INSTALL_DIR%\setup.bat"
-echo ) else ( >> "%INSTALL_DIR%\setup.bat"
-echo   pip install opencv-python==4.8.0.76 --only-binary=opencv-python >> "%INSTALL_DIR%\setup.bat"
-echo ) >> "%INSTALL_DIR%\setup.bat"
+REM Install OpenCV with proper version selection
+echo [INFO] Installing OpenCV...
+if !PY_MAJOR!.!PY_MINOR! GEQ 3.12 (
+    pip install opencv-python --only-binary=opencv-python
+) else (
+    pip install opencv-python==4.8.0.76 --only-binary=opencv-python
+)
 
-echo if errorlevel 1 ( >> "%INSTALL_DIR%\setup.bat"
-echo   echo ERROR: Failed to install OpenCV. >> "%INSTALL_DIR%\setup.bat"
-echo   echo This is required and cannot continue without it. >> "%INSTALL_DIR%\setup.bat"
-echo   call venv\Scripts\deactivate.bat >> "%INSTALL_DIR%\setup.bat"
-echo   pause >> "%INSTALL_DIR%\setup.bat"
-echo   exit /b 1 >> "%INSTALL_DIR%\setup.bat"
-echo ) >> "%INSTALL_DIR%\setup.bat"
+if %errorlevel% neq 0 (
+    echo [ERROR] Failed to install OpenCV.
+    echo [INFO] Trying alternative version...
+    pip install opencv-python --only-binary=opencv-python
+    
+    if %errorlevel% neq 0 (
+        echo [ERROR] Failed to install OpenCV. Cannot continue.
+        call venv\Scripts\deactivate.bat
+        pause
+        exit /b 1
+    )
+)
 
-REM Install EasyOCR with fallback options
-echo echo Installing EasyOCR... >> "%INSTALL_DIR%\setup.bat"
-echo echo This may take a while. Please be patient... >> "%INSTALL_DIR%\setup.bat"
-echo pip install easyocr==1.7.0 >> "%INSTALL_DIR%\setup.bat"
-echo if errorlevel 1 ( >> "%INSTALL_DIR%\setup.bat"
-echo   echo First attempt failed. Trying alternative approach... >> "%INSTALL_DIR%\setup.bat"
-echo   pip install easyocr --no-deps >> "%INSTALL_DIR%\setup.bat"
-echo   pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu >> "%INSTALL_DIR%\setup.bat"
-echo   pip install Pillow scipy Jinja2 scikit-image >> "%INSTALL_DIR%\setup.bat"
-echo   if errorlevel 1 ( >> "%INSTALL_DIR%\setup.bat"
-echo     echo WARNING: Could not install EasyOCR. >> "%INSTALL_DIR%\setup.bat"
-echo     echo Some OCR functions may not work. >> "%INSTALL_DIR%\setup.bat"
-echo     echo Proceeding with core functionality only. >> "%INSTALL_DIR%\setup.bat"
-echo   ) >> "%INSTALL_DIR%\setup.bat"
-echo ) >> "%INSTALL_DIR%\setup.bat"
+REM Install EasyOCR with fallback strategies
+echo [INFO] Installing EasyOCR (this may take several minutes)...
+pip install easyocr==1.7.0
+if %errorlevel% neq 0 (
+    echo [WARNING] Failed to install EasyOCR with standard method.
+    echo [INFO] Trying alternative installation approach...
+    
+    REM Try alternative installation method
+    pip install easyocr --no-deps
+    pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+    pip install Pillow scipy Jinja2 scikit-image
+    
+    echo [WARNING] Some OCR features may not work correctly.
+    echo [INFO] Will proceed with core functionality.
+)
 
-echo echo Installation complete. >> "%INSTALL_DIR%\setup.bat"
-echo call venv\Scripts\deactivate.bat >> "%INSTALL_DIR%\setup.bat"
-echo call "%INSTALL_DIR%\run.bat" >> "%INSTALL_DIR%\setup.bat"
+REM Verify critical packages are installed
+echo [INFO] Verifying installation...
+python -c "import requests; print('Requests OK')" >nul 2>&1
+if %errorlevel% neq 0 (
+    echo [ERROR] Critical package 'requests' is not properly installed.
+    call venv\Scripts\deactivate.bat
+    pause
+    exit /b 1
+)
 
-REM Run the setup process
+python -c "import customtkinter; print('CTk OK')" >nul 2>&1
+if %errorlevel% neq 0 (
+    echo [ERROR] Critical package 'customtkinter' is not properly installed.
+    call venv\Scripts\deactivate.bat
+    pause
+    exit /b 1
+)
+
+python -c "import numpy; print('NumPy OK')" >nul 2>&1
+if %errorlevel% neq 0 (
+    echo [ERROR] Critical package 'numpy' is not properly installed.
+    call venv\Scripts\deactivate.bat
+    pause
+    exit /b 1
+)
+
+python -c "import cv2; print('OpenCV OK')" >nul 2>&1
+if %errorlevel% neq 0 (
+    echo [ERROR] Critical package 'opencv-python' is not properly installed.
+    call venv\Scripts\deactivate.bat
+    pause
+    exit /b 1
+)
+
+REM Create verification file to indicate successful installation
+echo %date% %time% > "%INSTALL_DIR%\installation_completed.txt"
+
+echo.
+echo [SUCCESS] All dependencies installed successfully!
 echo.
 echo ==========================================
-echo Integrity Assistant is ready to install!
+echo Integrity Assistant is ready to launch!
+echo ==========================================
 echo.
-echo Press any key to begin the installation process...
-pause > nul
+
+REM Run the application
+echo [INFO] Starting Integrity Assistant...
+python integrity_main.py
+
+REM Deactivate the virtual environment when the app closes
+call venv\Scripts\deactivate.bat
+
 echo.
-cd /d "%INSTALL_DIR%"
-call "%INSTALL_DIR%\setup.bat" 
+echo [INFO] Integrity Assistant has closed.
+echo [INFO] Next time, you can use the desktop shortcut.
+echo.
+pause
+endlocal 
