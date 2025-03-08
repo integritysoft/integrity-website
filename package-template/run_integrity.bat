@@ -217,7 +217,7 @@ if !PY_MAJOR!.!PY_MINOR! GEQ 3.13 (
     )
 ) else (
     :: For older Python versions, standard method works fine
-    python -m pip install --upgrade pip setuptools wheel
+python -m pip install --upgrade pip setuptools wheel
 )
 
 :: Verify working status of pip
