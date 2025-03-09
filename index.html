@@ -1757,10 +1757,23 @@
                     <p style="margin-bottom: 15px;">The installer will automatically set up everything you need!</p>
                 </div>
                 
-                <a href="/downloads/integrity-assistant-1.0.2-beta.zip" class="download-btn" onclick="trackDownload('windows')">
-                    <i class="fab fa-windows"></i>
-                    Download Integrity Assistant 1.0.2
-                </a>
+                <div class="download-options" style="display: flex; flex-direction: column; gap: 20px;">
+                    <a href="/downloads/integrity-assistant-windows.zip" class="download-btn" onclick="trackDownload('windows')" style="text-align: center;">
+                        <i class="fab fa-windows"></i>
+                        Download Integrity Assistant 1.0.2 for Windows
+                    </a>
+                    
+                    <div style="display: flex; gap: 15px; justify-content: center;">
+                        <a href="/downloads/integrity-assistant-linux.zip" class="download-btn download-btn-alt" onclick="trackDownload('linux')" style="flex: 1; text-align: center;">
+                            <i class="fab fa-linux"></i>
+                            Linux Package
+                        </a>
+                        <a href="/downloads/integrity-assistant-macos.zip" class="download-btn download-btn-alt" onclick="trackDownload('macos')" style="flex: 1; text-align: center;">
+                            <i class="fab fa-apple"></i>
+                            macOS Package
+                        </a>
+                    </div>
+                </div>
                 
                 <div class="installation-steps" style="margin-top: 30px; padding: 20px; background: rgba(0, 0, 0, 0.3); border-radius: 8px;">
                     <h4 style="color: var(--turquoise); margin-bottom: 15px;">Installation Steps:</h4>
