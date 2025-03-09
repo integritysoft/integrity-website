@@ -5,11 +5,13 @@ import traceback
 import customtkinter as ctk
 from integrity_logger import IntegrityLogger
 from integrity_config import ConfigManager
+from integrity_core import IntegrityCore
 
 class IntegrityAssistant:
     def __init__(self):
         self.logger = IntegrityLogger.get_logger()
         self.config = ConfigManager.get_instance()
+        self.core = IntegrityCore()
         
         # Set up exception handler
         sys.excepthook = self.handle_exception
@@ -108,9 +110,14 @@ class IntegrityAssistant:
             self.status.configure(text="Analysis in progress...")
             self.window.update()
             
-            # TODO: Add your analysis code here
-            # For now, just show a success message
-            self.show_message("Analysis completed successfully!", "success")
+            # Use the core to analyze screen
+            result = self.core.analyze_screen()
+            
+            if result["status"] == "success":
+                message = f"Analysis completed successfully!\nConfidence: {result['confidence']:.1%}"
+                self.show_message(message, "success")
+            else:
+                self.show_message(f"Analysis failed: {result['message']}", "error")
             
         except Exception as e:
             self.logger.error("Analysis failed", exc_info=True)
