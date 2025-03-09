@@ -11,24 +11,10 @@
       "headers": {
         "Cache-Control": "public, max-age=3600",
         "Content-Disposition": "attachment",
+        "Content-Type": "application/octet-stream",
         "Access-Control-Allow-Origin": "*"
       }
     },
     { "src": "/(.*)", "dest": "/$1" }
-  ],
-  "headers": [
-    {
-      "source": "/downloads/(.*)",
-      "headers": [
-        {
-          "key": "Content-Type",
-          "value": "application/octet-stream"
-        },
-        {
-          "key": "Content-Disposition",
-          "value": "attachment"
-        }
-      ]
-    }
   ]
 } 
