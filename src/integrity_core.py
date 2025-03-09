@@ -1,10 +1,11 @@
 import os
 import sys
 import logging
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 import numpy as np
 import cv2
 from PIL import ImageGrab
+import pyautogui  # For mouse and keyboard control if needed
 
 class ScreenAnalyzer:
     def __init__(self):
@@ -12,8 +13,13 @@ class ScreenAnalyzer:
     
     def capture_screen(self) -> bytes:
         """Capture the current screen and return it as PNG bytes"""
-        # Capture screen using PIL
-        screenshot = ImageGrab.grab()
+        try:
+            # First try PIL's ImageGrab
+            screenshot = ImageGrab.grab()
+        except Exception as e:
+            # Fallback to pyautogui if PIL fails
+            screenshot = pyautogui.screenshot()
+        
         # Convert to numpy array
         frame = np.array(screenshot)
         # Convert from RGB to BGR (OpenCV format)
