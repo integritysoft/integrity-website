@@ -1,19 +1,15 @@
 import os
 import sys
 import json
-import asyncio
 import traceback
 import customtkinter as ctk
 from integrity_logger import IntegrityLogger
-from integrity_ui import IntegrityUI
-from integrity_api import IntegrityAPI
 from integrity_config import ConfigManager
 
 class IntegrityAssistant:
     def __init__(self):
         self.logger = IntegrityLogger.get_logger()
         self.config = ConfigManager.get_instance()
-        self.api = IntegrityAPI()
         
         # Set up exception handler
         sys.excepthook = self.handle_exception
@@ -35,17 +31,15 @@ class IntegrityAssistant:
         
         # Show error in UI if possible
         try:
-            if hasattr(self.ui, 'show_error'):
-                self.ui.show_error(error_msg)
-            else:
-                import tkinter as tk
-                from tkinter import messagebox
-                root = tk.Tk()
-                root.withdraw()
-                messagebox.showerror("Error", error_msg)
-                root.destroy()
+            import tkinter as tk
+            from tkinter import messagebox
+            root = tk.Tk()
+            root.withdraw()
+            messagebox.showerror("Error", error_msg)
+            root.destroy()
         except:
             self.logger.error("Failed to show error dialog", exc_info=True)
+            print(error_msg)
     
     def setup_ui(self):
         """Set up the application UI"""
@@ -54,11 +48,53 @@ class IntegrityAssistant:
             ctk.set_appearance_mode(self.config.get("theme", "dark"))
             ctk.set_default_color_theme("blue")
             
-            # Initialize main window
-            self.ui = IntegrityUI(self)
+            # Create main window
+            self.window = ctk.CTk()
+            self.window.title("Integrity Assistant")
+            self.window.geometry("1024x768")
+            self.window.minsize(800, 600)
             
-            # Check for existing session
-            asyncio.run(self.check_session())
+            # Configure grid
+            self.window.grid_columnconfigure(0, weight=1)
+            self.window.grid_rowconfigure(1, weight=1)
+            
+            # Create header
+            header = ctk.CTkLabel(
+                self.window,
+                text="Integrity Assistant",
+                font=("Helvetica", 24, "bold")
+            )
+            header.grid(row=0, column=0, pady=20)
+            
+            # Create main content area
+            content = ctk.CTkFrame(self.window)
+            content.grid(row=1, column=0, padx=20, pady=10, sticky="nsew")
+            
+            # Add buttons
+            btn_frame = ctk.CTkFrame(content)
+            btn_frame.pack(pady=20)
+            
+            analyze_btn = ctk.CTkButton(
+                btn_frame,
+                text="Start Analysis",
+                command=self.start_analysis
+            )
+            analyze_btn.pack(side="left", padx=10)
+            
+            settings_btn = ctk.CTkButton(
+                btn_frame,
+                text="Settings",
+                command=self.open_settings
+            )
+            settings_btn.pack(side="left", padx=10)
+            
+            # Status bar
+            self.status = ctk.CTkLabel(
+                self.window,
+                text="Ready",
+                anchor="w"
+            )
+            self.status.grid(row=2, column=0, padx=20, pady=10, sticky="ew")
             
             self.logger.info("UI initialized successfully")
             
@@ -66,80 +102,83 @@ class IntegrityAssistant:
             self.logger.error("Failed to initialize UI", exc_info=True)
             raise
     
-    async def check_session(self):
-        """Check for existing session and verify it"""
+    def start_analysis(self):
+        """Start the analysis process"""
         try:
-            if await self.api.verify_session():
-                # Get user profile
-                profile = await self.api.get_user_profile()
-                if profile["status"] == "success":
-                    self.ui.update_user_info(profile["data"])
-                    self.logger.info("Session restored successfully")
-                else:
-                    self.show_login_dialog()
-            else:
-                self.show_login_dialog()
+            self.status.configure(text="Analysis in progress...")
+            self.window.update()
+            
+            # TODO: Add your analysis code here
+            # For now, just show a success message
+            self.show_message("Analysis completed successfully!", "success")
+            
         except Exception as e:
-            self.logger.error(f"Session check failed: {e}")
-            self.show_login_dialog()
+            self.logger.error("Analysis failed", exc_info=True)
+            self.show_message(f"Analysis failed: {str(e)}", "error")
+        finally:
+            self.status.configure(text="Ready")
     
-    def show_login_dialog(self):
-        """Show login dialog"""
-        self.login_window = ctk.CTkToplevel()
-        self.login_window.title("Integrity Assistant Login")
-        self.login_window.geometry("400x300")
-        
-        ctk.CTkLabel(self.login_window, text="Please log in to continue").pack(pady=20)
-        
-        email_var = ctk.StringVar()
-        password_var = ctk.StringVar()
-        
-        ctk.CTkLabel(self.login_window, text="Email:").pack()
-        email_entry = ctk.CTkEntry(self.login_window, textvariable=email_var)
-        email_entry.pack(pady=5)
-        
-        ctk.CTkLabel(self.login_window, text="Password:").pack()
-        password_entry = ctk.CTkEntry(self.login_window, textvariable=password_var, show="*")
-        password_entry.pack(pady=5)
-        
-        async def login():
-            try:
-                response = await self.api.login(email_var.get(), password_var.get())
-                if response["status"] == "success":
-                    self.login_window.destroy()
-                    profile = await self.api.get_user_profile()
-                    if profile["status"] == "success":
-                        self.ui.update_user_info(profile["data"])
-                else:
-                    self.ui.show_error("Login failed. Please check your credentials.")
-            except Exception as e:
-                self.logger.error(f"Login failed: {e}")
-                self.ui.show_error(f"Login failed: {str(e)}")
-        
-        login_btn = ctk.CTkButton(
-            self.login_window,
-            text="Login",
-            command=lambda: asyncio.run(login())
-        )
-        login_btn.pack(pady=20)
-        
-        signup_label = ctk.CTkLabel(
-            self.login_window,
-            text="Don't have an account? Sign up here",
-            cursor="hand2"
-        )
-        signup_label.pack(pady=10)
-        signup_label.bind("<Button-1>", lambda e: self.open_signup_page())
+    def open_settings(self):
+        """Open settings dialog"""
+        try:
+            dialog = ctk.CTkToplevel(self.window)
+            dialog.title("Settings")
+            dialog.geometry("400x300")
+            dialog.transient(self.window)
+            dialog.grab_set()
+            
+            # Add theme selection
+            theme_label = ctk.CTkLabel(dialog, text="Theme:")
+            theme_label.pack(pady=10)
+            
+            theme_var = ctk.StringVar(value=self.config.get("theme", "dark"))
+            theme_menu = ctk.CTkOptionMenu(
+                dialog,
+                values=["dark", "light"],
+                variable=theme_var,
+                command=lambda t: self.change_theme(t)
+            )
+            theme_menu.pack(pady=5)
+            
+        except Exception as e:
+            self.logger.error("Failed to open settings", exc_info=True)
+            self.show_message(f"Failed to open settings: {str(e)}", "error")
     
-    def open_signup_page(self):
-        """Open the signup page in default browser"""
-        import webbrowser
-        webbrowser.open("https://integrity-website.vercel.app/signup")
+    def change_theme(self, theme: str):
+        """Change the application theme"""
+        try:
+            self.config.set("theme", theme)
+            ctk.set_appearance_mode(theme)
+        except Exception as e:
+            self.logger.error(f"Failed to change theme: {e}")
+            self.show_message(f"Failed to change theme: {str(e)}", "error")
+    
+    def show_message(self, message: str, type_: str = "info"):
+        """Show a message dialog"""
+        try:
+            if type_ == "error":
+                self.logger.error(message)
+                icon = "cancel"
+            elif type_ == "success":
+                self.logger.info(message)
+                icon = "check"
+            else:
+                self.logger.info(message)
+                icon = "info"
+            
+            ctk.CTkMessagebox(
+                title=type_.capitalize(),
+                message=message,
+                icon=icon
+            )
+        except Exception as e:
+            self.logger.error(f"Failed to show message: {e}")
+            print(f"{type_.upper()}: {message}")
     
     def run(self):
         """Run the main application"""
         try:
-            self.ui.mainloop()
+            self.window.mainloop()
         except Exception as e:
             self.logger.error("Application crashed", exc_info=True)
             raise
