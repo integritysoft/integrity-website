@@ -5,32 +5,45 @@ from typing import Dict, Any, Optional, Tuple
 from datetime import datetime, timedelta
 import numpy as np
 import cv2
-from PIL import ImageGrab, Image
+from PIL import Image
+import mss
+import mss.tools
 import easyocr
 import time
 import shutil
 
 class ScreenAnalyzer:
     def __init__(self):
-        self.last_screenshot: Optional[np.ndarray] = None
+        self.last_screenshot = None
         self.reader = None  # Initialize OCR reader only when needed
         self.logger = logging.getLogger("IntegrityCore.ScreenAnalyzer")
         self.last_save_time = 0
         self.images_dir = os.path.join(os.path.expanduser('~'), 'IntegrityAssistant', 'images')
         os.makedirs(self.images_dir, exist_ok=True)
         self.cleanup_old_images()
+        
+        # Initialize screen capture
+        try:
+            self.sct = mss.mss()
+            self.monitor = self.sct.monitors[0]  # Primary monitor
+            self.logger.info(f"Screen capture initialized. Monitor: {self.monitor}")
+        except Exception as e:
+            self.logger.error(f"Failed to initialize screen capture: {str(e)}")
+            raise
     
     def capture_screen(self) -> np.ndarray:
         """Capture the current screen optimized for OCR"""
         try:
-            # Use PIL's ImageGrab for efficient screen capture
-            screenshot = ImageGrab.grab()
+            # Capture screen using MSS (fast and reliable)
+            screenshot = self.sct.grab(self.monitor)
             
-            # Convert to numpy array efficiently
-            frame = np.asarray(screenshot)
+            # Convert to numpy array
+            frame = np.array(screenshot)
             
-            # Store in BGR format for OpenCV processing
-            self.last_screenshot = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+            # Convert from BGRA to BGR
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGRA2BGR)
+            
+            self.last_screenshot = frame
             
             # Save periodic snapshot if needed
             self._save_periodic_snapshot()
@@ -39,7 +52,19 @@ class ScreenAnalyzer:
             
         except Exception as e:
             self.logger.error(f"Screen capture failed: {str(e)}")
-            raise
+            self.logger.info("Attempting fallback capture method...")
+            
+            try:
+                # Fallback to PIL ImageGrab if MSS fails
+                with mss.mss() as sct:
+                    screenshot = sct.grab(sct.monitors[0])
+                    frame = Image.frombytes('RGB', screenshot.size, screenshot.rgb)
+                    frame = np.array(frame)
+                    self.last_screenshot = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+                    return self.last_screenshot
+            except Exception as fallback_error:
+                self.logger.error(f"Fallback capture also failed: {str(fallback_error)}")
+                raise
 
     def _save_periodic_snapshot(self):
         """Save screenshot every minute"""
@@ -49,7 +74,7 @@ class ScreenAnalyzer:
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
                 filename = os.path.join(self.images_dir, f"snapshot_{timestamp}.jpg")
                 
-                # Save as JPEG with good quality (95) - better size/quality trade-off for screenshots
+                # Save as JPEG with good quality (95)
                 cv2.imwrite(filename, self.last_screenshot, [cv2.IMWRITE_JPEG_QUALITY, 95])
                 
                 self.last_save_time = current_time
@@ -78,7 +103,7 @@ class ScreenAnalyzer:
                     os.remove(filepath)
                     self.logger.debug(f"Removed old snapshot: {filename}")
             
-            # Check directory size and clean up if too large (e.g., > 1GB)
+            # Check directory size and clean up if too large
             dir_size = sum(os.path.getsize(os.path.join(self.images_dir, f)) 
                           for f in os.listdir(self.images_dir))
             if dir_size > 1_000_000_000:  # 1GB
@@ -94,6 +119,14 @@ class ScreenAnalyzer:
                 
         except Exception as e:
             self.logger.error(f"Failed to cleanup old images: {str(e)}")
+
+    def __del__(self):
+        """Cleanup MSS resources"""
+        try:
+            if hasattr(self, 'sct'):
+                self.sct.close()
+        except:
+            pass
 
     def preprocess_for_ocr(self, image: np.ndarray) -> np.ndarray:
         """

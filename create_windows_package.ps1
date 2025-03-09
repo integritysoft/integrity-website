@@ -17,8 +17,8 @@ customtkinter==5.2.0
 numpy==1.26.0
 opencv-python==4.8.0
 Pillow==10.2.0
+mss==9.0.1
 easyocr==1.7.1
-python-dateutil==2.8.2
 "@ | Out-File -FilePath "$packageDir/src/requirements.txt" -Encoding utf8
 
 # Copy main files
@@ -41,7 +41,12 @@ def check_imports(packages):
             if package == 'cv2':
                 import cv2
             elif package == 'PIL':
-                from PIL import ImageGrab
+                from PIL import Image
+            elif package == 'mss':
+                import mss
+                with mss.mss() as sct:
+                    # Try to get monitor info to verify it works
+                    sct.monitors
             else:
                 __import__(package)
         except ImportError:

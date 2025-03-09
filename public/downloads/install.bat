@@ -68,16 +68,16 @@ python -m pip install --no-cache-dir -r src/requirements.txt
 
 :: Verify critical packages
 echo [INFO] Verifying critical packages...
-python -c "from verify_helpers import check_imports; failed = check_imports(['requests', 'customtkinter', 'numpy', 'cv2', 'PIL']); exit(1 if failed else 0)"
+python -c "from verify_helpers import check_imports; failed = check_imports(['requests', 'customtkinter', 'numpy', 'cv2', 'PIL', 'mss']); exit(1 if failed else 0)"
 if %errorlevel% neq 0 (
     echo [ERROR] Critical package verification failed
     echo [INFO] Attempting to fix installation...
     
-    :: Try reinstalling Pillow with --force-reinstall
-    python -m pip install --no-cache-dir --force-reinstall Pillow==10.2.0
+    :: Try reinstalling problematic packages
+    python -m pip install --no-cache-dir --force-reinstall Pillow==10.2.0 mss==9.0.1
     
     :: Verify again
-    python -c "from verify_helpers import check_imports; failed = check_imports(['requests', 'customtkinter', 'numpy', 'cv2', 'PIL']); exit(1 if failed else 0)"
+    python -c "from verify_helpers import check_imports; failed = check_imports(['requests', 'customtkinter', 'numpy', 'cv2', 'PIL', 'mss']); exit(1 if failed else 0)"
     if %errorlevel% neq 0 (
         echo [ERROR] Could not fix critical package installation
         pause
