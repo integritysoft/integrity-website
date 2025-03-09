@@ -1,181 +1,108 @@
 @echo off
-setlocal enabledelayedexpansion
+setlocal EnableDelayedExpansion
 
-echo ========== INTEGRITY ASSISTANT INSTALLER ==========
+echo Integrity Assistant Public Beta 1.0.2 - Installation
+echo ================================================
 echo.
 
-:: Set installation directory
-set INSTALL_DIR=%USERPROFILE%\IntegrityAssistant
-echo [INFO] Installing to: %INSTALL_DIR%
+:: Check if running as administrator
+net session >nul 2>&1
+if %errorLevel% neq 0 (
+    echo Please run this script as Administrator
+    echo Right-click install.bat and select "Run as administrator"
+    pause
+    exit /b 1
+)
 
-:: Check for Python
-where python >nul 2>&1
-if %errorlevel% neq 0 (
-    echo [ERROR] Python not found. Opening download page...
+:: Check Python installation
+python --version > nul 2>&1
+if %errorLevel% neq 0 (
+    echo Python is not installed or not in PATH
+    echo Please install Python 3.8 or newer from https://python.org
+    echo IMPORTANT: Check "Add Python to PATH" during installation
     start https://www.python.org/downloads/
-    echo Please install Python and check "Add Python to PATH"
     pause
     exit /b 1
 )
 
 :: Get Python version
-for /f "tokens=*" %%i in ('python -c "import sys; print(sys.version.split()[0])"') do set PY_VER=%%i
-echo [INFO] Found Python %PY_VER%
-
-:: Parse version components
-for /f "tokens=1,2,3 delims=." %%a in ("%PY_VER%") do (
+for /f "tokens=2" %%I in ('python --version 2^>^&1') do set "PYVER=%%I"
+for /f "tokens=1,2 delims=." %%a in ("%PYVER%") do (
     set PY_MAJOR=%%a
     set PY_MINOR=%%b
-    set PY_PATCH=%%c
 )
 
-:: Create installation directory
-if not exist "%INSTALL_DIR%" mkdir "%INSTALL_DIR%"
+:: Check Python version
+if %PY_MAJOR% LSS 3 (
+    echo Error: Python 3.8 or newer is required
+    echo Current version: %PYVER%
+    pause
+    exit /b 1
+)
+if %PY_MAJOR%==3 if %PY_MINOR% LSS 8 (
+    echo Error: Python 3.8 or newer is required
+    echo Current version: %PYVER%
+    pause
+    exit /b 1
+)
 
-:: Copy files
-echo [INFO] Copying files...
-xcopy /Y /Q "src\*" "%INSTALL_DIR%\" >nul
+echo Found Python %PYVER%
 
 :: Create virtual environment
-echo [INFO] Setting up Python environment...
-cd /d "%INSTALL_DIR%"
+echo Creating virtual environment...
+if exist venv (
+    echo Removing old virtual environment...
+    rmdir /s /q venv
+)
 python -m venv venv
-call venv\Scripts\activate.bat
-
-:: Critical setup for Python 3.13+
-if !PY_MAJOR!.!PY_MINOR! GEQ 3.13 (
-    echo [INFO] Setting up Python 3.13+ compatibility...
-    python -m pip install --upgrade pip
-    python -m pip install --no-cache-dir wheel==0.42.0
-    python -m pip install --no-cache-dir setuptools==69.2.0 --force-reinstall
-    
-    :: Verify setuptools
-    python -c "import setuptools" >nul 2>&1
-    if %errorlevel% neq 0 (
-        echo [ERROR] Failed to configure setuptools. Installation cannot continue.
-        call venv\Scripts\deactivate.bat
-        pause
-        exit /b 1
-    )
-) else (
-    python -m pip install --upgrade pip setuptools wheel
-)
-
-:: Install packages one by one with verification
-echo [INFO] Installing dependencies...
-
-:: Install requests
-echo [INFO] Installing requests...
-python -m pip install --no-cache-dir requests==2.31.0
-if %errorlevel% neq 0 (
-    echo [ERROR] Failed to install requests. Installation cannot continue.
-    call venv\Scripts\deactivate.bat
+if errorlevel 1 (
+    echo Failed to create virtual environment
     pause
     exit /b 1
 )
 
-:: Verify requests
-python -c "import requests" >nul 2>&1
-if %errorlevel% neq 0 (
-    echo [ERROR] Failed to verify requests installation.
-    call venv\Scripts\deactivate.bat
+:: Activate virtual environment
+call venv\Scripts\activate
+if errorlevel 1 (
+    echo Failed to activate virtual environment
     pause
     exit /b 1
 )
 
-:: Install customtkinter
-echo [INFO] Installing customtkinter...
-python -m pip install --no-cache-dir customtkinter==5.2.0
-if %errorlevel% neq 0 (
-    echo [ERROR] Failed to install customtkinter.
-    call venv\Scripts\deactivate.bat
+:: Upgrade pip
+echo Upgrading pip...
+python -m pip install --upgrade pip
+if errorlevel 1 (
+    echo Failed to upgrade pip
     pause
     exit /b 1
 )
 
-:: Verify customtkinter
-python -c "import customtkinter" >nul 2>&1
-if %errorlevel% neq 0 (
-    echo [ERROR] Failed to verify customtkinter installation.
-    call venv\Scripts\deactivate.bat
-    pause
-    exit /b 1
-)
-
-:: Install numpy with version based on Python version
-echo [INFO] Installing NumPy...
-if !PY_MAJOR!.!PY_MINOR! GEQ 3.13 (
-    python -m pip install --no-cache-dir --only-binary=numpy "numpy>=1.26.0"
-) else (
-    python -m pip install --no-cache-dir --only-binary=numpy numpy==1.24.3
-)
-if %errorlevel% neq 0 (
-    echo [ERROR] Failed to install NumPy.
-    call venv\Scripts\deactivate.bat
-    pause
-    exit /b 1
-)
-
-:: Verify numpy
-python -c "import numpy" >nul 2>&1
-if %errorlevel% neq 0 (
-    echo [ERROR] Failed to verify NumPy installation.
-    call venv\Scripts\deactivate.bat
-    pause
-    exit /b 1
-)
-
-:: Install opencv-python
-echo [INFO] Installing OpenCV...
-python -m pip install --no-cache-dir --only-binary=opencv-python opencv-python==4.8.0.76
-if %errorlevel% neq 0 (
-    echo [ERROR] Failed to install OpenCV.
-    call venv\Scripts\deactivate.bat
-    pause
-    exit /b 1
-)
-
-:: Verify opencv
-python -c "import cv2" >nul 2>&1
-if %errorlevel% neq 0 (
-    echo [ERROR] Failed to verify OpenCV installation.
-    call venv\Scripts\deactivate.bat
-    pause
-    exit /b 1
-)
-
-:: Install python-supabase
-echo [INFO] Installing Supabase client...
-python -m pip install --no-cache-dir python-supabase==2.0.0
-if %errorlevel% neq 0 (
-    echo [ERROR] Failed to install Supabase client.
-    call venv\Scripts\deactivate.bat
-    pause
-    exit /b 1
-)
-
-:: Verify all critical imports
-echo [INFO] Verifying all dependencies...
-python -c "import requests, customtkinter, numpy, cv2; from supabase import create_client" >nul 2>&1
-if %errorlevel% neq 0 (
-    echo [ERROR] Final verification failed. Please try reinstalling.
-    call venv\Scripts\deactivate.bat
+:: Install dependencies
+echo Installing dependencies...
+python -m pip install --no-cache-dir -r requirements.txt
+if errorlevel 1 (
+    echo Failed to install dependencies
     pause
     exit /b 1
 )
 
 :: Create desktop shortcut
-echo [INFO] Creating desktop shortcut...
-(
-echo @echo off
-echo cd /d "%INSTALL_DIR%"
-echo call venv\Scripts\activate.bat
-echo python integrity_main.py
-echo call venv\Scripts\deactivate.bat
-) > "%USERPROFILE%\Desktop\Integrity Assistant.bat"
+echo Creating desktop shortcut...
+set SCRIPT_DIR=%~dp0
+set SHORTCUT_PATH=%USERPROFILE%\Desktop\Integrity Assistant.lnk
+powershell -ExecutionPolicy Bypass -Command "$ws = New-Object -ComObject WScript.Shell; $s = $ws.CreateShortcut('%SHORTCUT_PATH%'); $s.TargetPath = '%SCRIPT_DIR%run_integrity.bat'; $s.WorkingDirectory = '%SCRIPT_DIR%'; $s.Description = 'Integrity Assistant Public Beta 1.0.2'; $s.Save()"
+
+:: Create start menu shortcut
+set STARTMENU_PATH=%APPDATA%\Microsoft\Windows\Start Menu\Programs\Integrity Assistant.lnk
+powershell -ExecutionPolicy Bypass -Command "$ws = New-Object -ComObject WScript.Shell; $s = $ws.CreateShortcut('%STARTMENU_PATH%'); $s.TargetPath = '%SCRIPT_DIR%run_integrity.bat'; $s.WorkingDirectory = '%SCRIPT_DIR%'; $s.Description = 'Integrity Assistant Public Beta 1.0.2'; $s.Save()"
 
 echo.
-echo [SUCCESS] Installation complete!
-echo A desktop shortcut has been created.
+echo Installation completed successfully!
+echo Desktop and Start Menu shortcuts have been created
 echo.
-pause 
+echo Press any key to start Integrity Assistant...
+pause > nul
+
+:: Start the application
+call run_integrity.bat 

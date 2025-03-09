@@ -1,50 +1,35 @@
-=======================================
-INTEGRITY ASSISTANT - QUICK START GUIDE
-=======================================
+Integrity Assistant Public Beta 1.0.2
+===============================
 
-SYSTEM REQUIREMENTS
-------------------
-- Windows 10 or newer
-- Python 3.8 or newer (Python 3.13.2 supported)
-- Internet connection for initial setup
+Thank you for downloading Integrity Assistant! This package contains the latest stable version of our software.
 
-INSTALLATION
------------
-1. Extract all files to any location
-2. Double-click 'install.bat'
+Installation Instructions
+------------------------
+1. Extract all files from this zip package
+2. Run install.bat (Windows) or install.sh (MacOS/Linux)
 3. Follow the on-screen instructions
-4. Use the desktop shortcut to start the application
 
-FIRST TIME SETUP
+System Requirements
+------------------
+- Windows 10/11 (64-bit) or MacOS 10.15+ or Linux (Ubuntu 20.04+)
+- Python 3.8 or newer
+- 4GB RAM minimum (8GB recommended)
+- 1GB free disk space
+
+Package Contents
 ---------------
-1. If Python is not installed:
-   - Click the link that opens automatically
-   - Download and install Python
-   - CHECK "Add Python to PATH" during installation
-   - Run install.bat again
+- install.bat/install.sh: Installation script
+- run_integrity.bat/run_integrity.sh: Launch script
+- src/: Source code and dependencies
+- requirements.txt: Python package dependencies
 
-2. Log in with your Integrity Assistant account
-   - Use your email and password
-   - If you don't have an account, create one at:
-     https://integrity-website.vercel.app
+Support
+-------
+If you encounter any issues:
+1. Check the logs in ~/IntegrityAssistant/logs/
+2. Visit our website: https://integrity-website.vercel.app
+3. Contact support: support@integritysoftware.ai
 
-TROUBLESHOOTING
---------------
-1. Installation Errors:
-   - Run as Administrator
-   - Ensure you have internet connection
-   - Clear pip cache: pip cache purge
-
-2. Application Won't Start:
-   - Run install.bat again
-   - Check your antivirus isn't blocking it
-   - Verify your account at our website
-
-Need Help?
-----------
-Visit: https://integrity-website.vercel.app/support
-
-=======================================
-Version: 2.0.0
-Last Updated: March 2024
-=======================================
+Version: 1.0.2 Public Beta
+Release Date: March 2024
+Copyright © 2024 Integrity Software
