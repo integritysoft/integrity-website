@@ -112,9 +112,37 @@ echo ==========================================
 echo Integrity Assistant is ready to launch!
 echo.
 
+:: Get the directory containing this script
+set "SCRIPT_DIR=%~dp0"
+cd /d "%SCRIPT_DIR%"
+
+:: Check if virtual environment exists
+if not exist "venv\Scripts\activate.bat" (
+    echo [ERROR] Virtual environment not found.
+    echo Please run install.bat first to set up Integrity Assistant.
+    pause
+    exit /b 1
+)
+
+:: Activate virtual environment
+call venv\Scripts\activate.bat
+
+:: Verify critical packages
+python -c "from verify_helpers import check_imports; failed = check_imports(['requests', 'customtkinter', 'numpy', 'cv2', 'PIL']); exit(1 if failed else 0)"
+if %errorlevel% neq 0 (
+    echo [ERROR] Some required packages are missing.
+    echo Please run install.bat to repair the installation.
+    pause
+    exit /b 1
+)
+
 :: Run the application
 echo [INFO] Starting Integrity Assistant...
-python integrity_main.py
+python src\integrity_main.py
+if errorlevel 1 (
+    echo [ERROR] Application exited with an error.
+    pause
+)
 
 :: Deactivate virtual environment
 call venv\Scripts\deactivate.bat
